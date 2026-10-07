@@ -67,7 +67,7 @@ npx serve prototipo
 | RF06 | Selecionar disciplinas p/ o planejamento | Seleção de turmas na Matrícula |
 | RF07 | Simular o percurso | `aluno/simulador.html` (independente do Progresso) |
 | RF08 | Salvar o planejamento | Botão salvar (persiste no navegador) |
-| RF09 | Alterar o planejamento salvo | Adicionar / remover turmas |
+| RF09 | Alterar o planejamento salvo |  `aluno/simulador.html`  |
 
 ### Funcionais — Coordenador
 
