@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matrícula — Planejamento Acadêmico</title>
+  <link rel="stylesheet" href="../assets/estilo.css">
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <style>
+    .turma-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .turma-card:hover {
+      border-color: #3b82f6;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .turma-card.selecionada {
+      border-color: #22c55e;
+      background: #f0fdf4;
+    }
+    .turma-card input {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+    .turma-info { flex: 1; }
+    .turma-info h3 { margin: 0 0 4px 0; font-size: 15px; color: #1e293b; }
+    .turma-info p { margin: 2px 0; font-size: 13px; color: #64748b; }
+    .turma-horario {
+      font-family: monospace;
+      background: #fef3c7;
+      color: #92400e;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .vazio {
+      padding: 40px;
+      text-align: center;
+      color: #64748b;
+      background: white;
+      border-radius: 10px;
+      border: 2px dashed #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app"></div>
+
+  <script src="../assets/dados.js"></script>
+  <script src="../assets/sidebar.js"></script>
+  <script src="../assets/grafo.js"></script>
+  <script src="matricula.js"></script>
+
+  <script>
+    const app = document.getElementById('app');
+
+    app.innerHTML = montarLayout('matricula', `
+      <header style="margin-bottom: 24px;">
+        <h1 style="margin: 0;">Matrícula</h1>
+        <p style="color: #64748b; margin: 4px 0 0 0;" id="status-matricula"></p>
+      </header>
+
+      <div id="conteudo-matricula"></div>
+    `);
+
+    renderizarMatricula();
+  </script>
+
+</body>
+</html>

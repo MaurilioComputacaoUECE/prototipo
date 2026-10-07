@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Planejamento Acadêmico</title>
+  <link rel="stylesheet" href="assets/estilo.css">
+</head>
+<body>
+
+  <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f1f5f9; padding: 24px;">
+    <div style="background: white; border-radius: 12px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
+
+      <h1 style="margin: 0 0 8px 0; font-size: 22px; color: #1e293b;">Planejamento Acadêmico</h1>
+      <p style="margin: 0 0 28px 0; color: #64748b; font-size: 14px;">
+        Entre com suas credenciais
+      </p>
+
+      <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+        Matrícula
+      </label>
+      <input type="text" value="2024001234"
+             style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; margin-bottom: 16px; box-sizing: border-box;">
+
+      <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+        Senha
+      </label>
+      <input type="password" value="••••••••"
+             style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; margin-bottom: 28px; box-sizing: border-box;">
+
+      <button id="btn-entrar"
+              style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+        Entrar
+      </button>
+
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('btn-entrar').addEventListener('click', () => {
+      const curso = localStorage.getItem('aluno_curso');
+      const versao = localStorage.getItem('aluno_versao');
+
+      if (curso && versao) {
+        window.location.href = 'aluno/fluxograma.html';
+      } else {
+        window.location.href = 'escolher-curso.html';
+      }
+    });
+  </script>
+
+</body>
+</html>

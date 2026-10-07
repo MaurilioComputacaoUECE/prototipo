@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fluxograma — Planejamento Acadêmico</title>
+  <link rel="stylesheet" href="../assets/estilo.css">
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+</head>
+<body>
+
+  <div id="app"></div>
+
+  <script src="../assets/dados.js"></script>
+  <script src="../assets/sidebar.js"></script>
+  <script src="../assets/grafo.js"></script>
+  <script src="fluxograma.js"></script>
+
+  <script>
+    const app = document.getElementById('app');
+    app.innerHTML = montarLayout('fluxograma', `
+      <header style="margin-bottom: 24px;">
+        <h1 style="margin: 0;">Fluxograma Curricular</h1>
+        <p style="color: #64748b; margin: 4px 0 0 0;">Clique numa disciplina para alternar o estado</p>
+      </header>
+
+      <div style="display: flex; gap: 24px; margin-bottom: 24px;">
+        <div>
+          <p style="font-size: 12px; color: #64748b; margin: 0;">Optativas</p>
+          <p style="font-size: 16px; font-weight: 600; margin: 0;">
+            <span id="optativas-concluidas">0</span> de 4
+          </p>
+        </div>
+        <div>
+          <p style="font-size: 12px; color: #64748b; margin: 0;">Progresso</p>
+          <p style="font-size: 16px; font-weight: 600; margin: 0;">
+            <span id="progresso">0</span>%
+          </p>
+        </div>
+        <button id="btn-cadeia" style="padding: 8px 16px; border-radius: 8px; border: 1px solid #f59e0b; background: #fef3c7; cursor: pointer;">
+          <p style="font-size: 12px; color: #92400e; margin: 0;">Semestres mínimos</p>
+          <p style="font-size: 16px; font-weight: 600; color: #78350f; margin: 0;">
+            <span id="semestres-min">0</span>
+          </p>
+        </button>
+      </div>
+
+      <div id="fluxograma" class="periodo"></div>
+
+      <div style="margin-top: 40px;">
+        <h2 style="font-size: 14px; text-transform: uppercase; color: #64748b; margin-bottom: 4px;">Caminhos a seguir</h2>
+        <p style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">
+          Sequência de disciplinas que ainda faltam cursar.
+        </p>
+
+        <!-- Abas -->
+        <div id="abas-grafo" style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+          <button class="aba-grafo ativa" data-filtro="obrigatorias">Obrigatórias</button>
+          <button class="aba-grafo aba-critica" data-filtro="critica">Crítica</button>
+          <button class="aba-grafo" data-filtro="tudo">Tudo</button>
+        </div>
+
+        <!-- Legenda -->
+        <div id="legenda-grafo" style="display:flex; gap:16px; align-items:center; font-size:12px; color:#475569; margin-bottom:10px;">
+          <span style="display:flex; align-items:center; gap:6px;">
+            <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#dbeafe; border:2px solid #3b82f6;"></span>
+            Em andamento
+          </span>
+          <span style="display:flex; align-items:center; gap:6px;">
+            <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#f1f5f9; border:2px solid #cbd5e1;"></span>
+            Futura
+          </span>
+          <span style="display:flex; align-items:center; gap:6px;">
+            <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#dcfce7; border:2px solid #22c55e; border-style:dashed;"></span>
+            Concluída (pré-req)
+          </span>
+          <span style="display:flex; align-items:center; gap:6px;">
+            <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#fee2e2; border:2px solid #dc2626;"></span>
+            Crítica
+          </span>
+        </div>
+
+        <!-- Grafo -->
+        <div id="grafo-caminhos" style="height: 500px; width: 100%; overflow: hidden; border: 1px dashed #cbd5e1; background: #fafafa; position: relative;"></div>
+      </div>
+
+      <div id="modal-cadeia" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; z-index: 50; padding: 16px;">
+        <div style="background: white; border-radius: 12px; padding: 24px; max-width: 600px; width: 100%;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2 style="margin: 0;">Cadeia crítica</h2>
+            <button id="fechar-modal" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #94a3b8;">×</button>
+          </div>
+          <p style="color: #64748b; font-size: 14px;">
+            Este é o caminho mais longo de pré-requisitos que ainda falta percorrer.
+          </p>
+          <div id="conteudo-cadeia" style="margin: 16px 0;"></div>
+          <div style="background: #fef3c7; border-radius: 8px; padding: 16px;">
+            <p style="margin: 0; color: #78350f;">
+              <strong>Semestres mínimos:</strong>
+              <span id="semestres-modal" style="font-size: 20px; font-weight: bold;">0</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    `);
+
+    renderizarFluxograma();
+    configurarModal();
+    configurarAbasGrafo();
+
+
+    function aguardarVis(tentativa = 0) {
+      if (typeof vis === 'undefined') {
+        if (tentativa < 30) {
+          setTimeout(() => aguardarVis(tentativa + 1), 200);
+        } else {
+          console.error('vis.js não carregou após 6 segundos');
+        }
+        return;
+      }
+      renderizarGrafo('grafo-caminhos', 'obrigatorias');
+    }
+    aguardarVis();
+  </script>
+
+</body>
+</html>

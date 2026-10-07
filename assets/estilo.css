@@ -1,0 +1,183 @@
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #f1f5f9;
+  margin: 0;
+}
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 250px;
+  background: #1e293b;
+  color: white;
+  padding: 20px 0;
+  min-height: 100vh;
+  flex-shrink: 0;
+}
+
+.sidebar h1 {
+  font-size: 16px;
+  padding: 0 20px;
+  margin: 0 0 20px 0;
+}
+
+.sidebar a {
+  display: block;
+  padding: 12px 20px;
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.sidebar a:hover {
+  background: #334155;
+  color: white;
+}
+
+.sidebar a.ativo {
+  background: #334155;
+  color: white;
+  border-left: 4px solid #3b82f6;
+}
+
+.conteudo {
+  flex: 1;
+  padding: 24px;
+  min-width: 0;
+}
+
+/* Cards de disciplina */
+.periodo {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  align-items: flex-start;
+}
+
+.coluna {
+  flex-shrink: 0;
+  width: 220px;
+}
+
+.coluna h2 {
+  font-size: 13px;
+  color: #64748b;
+  text-transform: uppercase;
+  text-align: center;
+  margin: 0 0 12px 0;
+}
+
+.coluna.coluna-optativas {
+  background: #f8fafc;
+  border-left: 2px solid #e2e8f0;
+  padding-left: 16px;
+  padding-right: 8px;
+  max-height: 70vh;
+  overflow-y: auto;
+  z-index: 1;
+}
+
+.coluna.coluna-optativas h2 {
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  padding: 8px 0;
+  z-index: 2;
+  border-bottom: 1px solid #e2e8f0;
+}
+.disciplina {
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.disciplina:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.disciplina .codigo {
+  font-size: 11px;
+  opacity: 0.7;
+  margin: 0;
+}
+
+.disciplina .nome {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 4px 0;
+}
+
+.disciplina .estado {
+  font-size: 11px;
+  opacity: 0.7;
+  margin: 0;
+}
+
+/* Estados */
+.futura {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.em-andamento {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  color: #1e40af;
+}
+
+.concluida {
+  background: #dcfce7;
+  border-color: #22c55e;
+  color: #15803d;
+}
+
+.optativa {
+  border-style: dashed;
+}
+
+/* Grafo */
+#grafo-caminhos {
+  height: 450px;
+  border: 1px dashed #cbd5e1;
+  background: #fafafa;
+}
+
+.aba-grafo {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #475569;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.aba-grafo:hover {
+  border-color: #3b82f6;
+  color: #1e40af;
+}
+.aba-grafo.ativa {
+  background: #1e293b;
+  border-color: #1e293b;
+  color: white;
+}
+
+/* Aba crítica: vermelha quando ativa */
+.aba-grafo.aba-critica:hover {
+  border-color: #dc2626;
+  color: #991b1b;
+}
+.aba-grafo.aba-critica.ativa {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: white;
+}
