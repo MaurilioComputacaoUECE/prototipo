@@ -1,186 +1,282 @@
-# Fluxograma Interativo para Planejamento Acadêmico — Etapa 2: MoLIC + Protótipo
+# Fluxograma Interativo para Planejamento Acadêmico
 
-> Documento da segunda etapa, construído a partir da Etapa 1 (entrevista:
-> RF01–RF15, RNF01–RNF04, US01–US12). Os requisitos da Etapa 1 foram mantidos
-> sem alteração. Este documento descreve a modelagem MoLIC e o protótipo de
-> alta fidelidade que os contempla. Protótipo em `prototipo/`.
+Protótipo navegável de um sistema que ajuda o aluno a entender **qual caminho
+seguir no curso** (pré-requisitos, concluídas, em andamento, futuras) e o
+coordenador a configurar fluxo, disciplinas e ofertas.
 
-## 1. Objetivo principal do sistema
+- **Repositório:** https://github.com/MaurilioComputacaoUECE/prototipo
+- **Etapa 1 (entrevista):** RF01–RF15, RNF01–RNF04, US01–US12 — mantidos aqui
+  como referência, sem alterações.
+- **Etapa 2 (este documento):** modelagem MoLIC + protótipo de alta fidelidade.
 
-O problema central identificado é a dificuldade do aluno em entender o caminho
-que deve seguir no curso, principalmente por causa dos pré-requisitos, das
-disciplinas já concluídas, das disciplinas em andamento e das que ainda poderá
-cursar. O sistema deve permitir que o aluno visualize e planeje seu percurso
-acadêmico de forma clara.
+## Índice
 
-Critério de sucesso fornecido pela cliente:
-"O sistema resolve o problema quando consegue comunicar ao aluno qual caminho
-seguir."
+1. [Sobre](#1-sobre) · 2. [Demonstração](#2-demonstração) · 3. [Requisitos](#3-requisitos) ·
+4. [MoLIC](#4-molic--modelagem-da-interação) · 5. [Telas](#5-telas-do-protótipo) ·
+6. [Design](#6-design) · 7. [Limitações](#7-limitações) · 8. [Referências](#8-referências)
 
-## 2. Atores
+## 1. Sobre
 
-### Ator 1 — Aluno (principal usuário)
-Necessidades: visualizar fluxo curricular; concluidas / em andamento /
-a cursar; consultar pré-requisitos; ver o que pode cursar após cada disciplina;
-ver ofertadas e horários na matrícula; selecionar disciplinas para planejar;
-simular o caminho; salvar e alterar o planejamento.
+### O problema
 
-### Ator 2 — Coordenador
-Necessidades: cadastrar fluxos; cadastrar disciplinas; definir pré-requisitos
-e relações; configurar obrigatórias/optativas e a quantidade de optativas;
-informar ofertadas e horários no período de matrícula.
+O aluno não consegue visualizar seu percurso: o que já cursou, o que está
+cursando, o que falta e o que pode cursar a seguir (pré-requisitos e ofertas).
 
-## 3. Requisitos funcionais (Etapa 1 — mantidos)
+### Critério de sucesso
 
-Aluno: RF01 ver fluxo; RF02 identificar estados; RF03 consultar
-pré-requisitos; RF04 ver o que pode cursar a partir dos prés cumpridos;
-RF05 ver ofertadas e horários na matrícula; RF06 selecionar disciplinas;
-RF07 simular percurso; RF08 salvar; RF09 alterar planejamento salvo.
+> "O sistema resolve o problema quando consegue comunicar ao aluno qual
+> caminho seguir."
 
-Coordenador: RF10 cadastrar/configurar fluxos; RF11 cadastrar disciplinas
-no fluxo; RF12 definir pré-requisitos; RF13 configurar obrigatórias e
-optativas; RF14 definir quantidade de optativas; RF15 informar ofertadas
-e horários do período.
+### Atores
 
-## 4. Requisitos não funcionais (Etapa 1 — mantidos)
+| Ator | Descrição | Necessidades |
+|------|-----------|--------------|
+| 🎓 Aluno (João) | 21 anos, 5º período, web básico | Ver fluxo e estados; consultar prés e continuidades; ver ofertadas/horários; montar, simular, salvar e alterar o planejamento |
+| 📋 Coordenadora (Ana) | 45 anos, web intermediária | Cadastrar fluxos e disciplinas; definir prés; configurar obrigatórias/optativas e qtd; informar ofertadas e horários |
 
-RNF01 Clareza da apresentação (distinguir realizado / em andamento /
-futuro / continuidades). RNF02 Desempenho adequado (sem tempo inventado —
-a entrevistada não fixou máximo). RNF03 Persistência (salvos permanecem).
-RNF04 Privacidade e controle de acesso (fluxograma/planejamento só do
-próprio aluno; coordenador configura o fluxo, sem acesso ao individual).
+## 2. Demonstração
+
+```bash
+# opção 1 — abrir direto
+prototipo/index.html
+
+# opção 2 — servidor local
+npx serve prototipo
+```
+
+- **Aluno:** login com a matrícula `2024001234` → escolher curso + versão →
+  Fluxograma → Matrícula → Simulador.
+- **Coordenadora:** login com `ana@coordenador.edu` → Fluxo → Disciplinas →
+  Ofertas do período.
+
+> Protótipo estático (sem backend). Os dados ficam no `localStorage` do
+> navegador. Requer internet para o grafo (CDN vis-network).
+
+## 3. Requisitos
 
 
-## 5. User Stories (Etapa 1 — mantidas, resumo)
+### Funcionais — Aluno
 
-Coordenador: US01 cadastrar fluxo; US02 disciplinas e relações;
-US03 obrigatórias/optativas; US04 ofertas e horários.
-Aluno: US05 visualizar fluxo; US06 registrar progresso; US07 consultar
-dependências e continuidade; US08 optativas; US09 ofertadas;
-US10 montar e simular; US11 salvar; US12 alterar.
-Critérios de aceitação e análise INVEST: conforme Etapa 1, sem alterações.
+| ID | Requisito | Contemplado em |
+|----|-----------|----------------|
+| RF01 | Visualizar o fluxo curricular | Progresso (`aluno/fluxograma.html`) |
+| RF02 | Identificar concluídas / em andamento / futuras | Cards por estado + % de progresso |
+| RF03 | Consultar pré-requisitos | Cards + grafo + modal de cadeia crítica |
+| RF04 | Ver o que pode cursar a partir dos prés cumpridos | Grafo (filtros) + Matrícula filtrada |
+| RF05 | Ver ofertadas e horários na matrícula | `aluno/matricula.html` (+ estado fora do período) |
+| RF06 | Selecionar disciplinas p/ o planejamento | Seleção de turmas na Matrícula |
+| RF07 | Simular o percurso | `aluno/simulador.html` (independente do Progresso) |
+| RF08 | Salvar o planejamento | Botão salvar (persiste no navegador) |
+| RF09 | Alterar o planejamento salvo | Adicionar / remover turmas |
 
-## 6. MoLIC — Modelagem da Interação
+### Funcionais — Coordenador
 
-Conversa usuário-sistema: turnos, falas [u]/[s], decisões <d>, quebras {b}.
-Diagrama do Aluno em `fluxograma.py` (gera `molic_aluno.png`).
+| ID | Requisito | Contemplado em |
+|----|-----------|----------------|
+| RF10 | Cadastrar e configurar fluxos | `coordenador/fluxo.html` (curso + versão + grade) |
+| RF11 | Cadastrar disciplinas no fluxo | Fluxo + `coordenador/disciplina.html` (catálogo) |
+| RF12 | Definir pré-requisitos | Catálogo e grade |
+| RF13 | Configurar obrigatórias e optativas | Tipo por disciplina |
+| RF14 | Definir qtd de optativas | Campo na tela de fluxo |
+| RF15 | Informar ofertadas e horários | `coordenador/matricula.html` (período + ofertas) |
 
-### 6.1 Convenções
-[u] usuário · [s] sistema · {b} quebra · <d> decisão · -> continuação.
+### Não funcionais
 
-### 6.2 Aluno — abertura
-[s] pergunta quem é -> login. [u] informa credenciais. {b1} inválidas ->
-pede de novo. {b2} sem fluxo -> procurar coordenação. OK -> turno central.
+| ID | Requisito | Como aparece |
+|----|-----------|--------------|
+| RNF01 | Clareza visual | Cores por estado, colunas por semestre, grafo |
+| RNF02 | Desempenho adequado | Protótipo local, sem tempo fixado (a entrevista não definiu máximo) |
+| RNF03 | Persistência | `localStorage` (progresso, turmas, simulação, catálogo, período) |
+| RNF04 | Privacidade e acesso | Telas separadas por papel; controle total fica como evolução |
 
-### 6.3 Aluno — turno central
-[s] oferece: (a) ver fluxograma, (b) consultar disciplina,
-(c) ver ofertadas, (d) montar/editar planejamento, sair.
+### User Stories (resumo)
 
-### 6.4 (a) Ver fluxograma — US05, US06
-[s] exibe fluxo (concluída/em andamento/futura). [u] clica. <d> concluída?
-não -> marcar; sim -> desmarcar. {b3} marcar sem pré -> alerta. Recalcula,
-volta ao turno. Protótipo: aluno/fluxograma.html — colunas por semestre +
-Optativas, clique alterna estado, % progresso, modal cadeia crítica
-(semestres mínimos) e grafo de pré-requisitos.
+Coordenador: US01 fluxo · US02 disciplinas · US03 obrig/opt · US04 ofertas.
+Aluno: US05 fluxo · US06 progresso · US07 dependências · US08 optativas ·
+US09 ofertadas · US10 montar/simular · US11 salvar · US12 alterar.
+Critérios de aceitação e análise INVEST: documento da Etapa 1, sem alterações.
 
-### 6.5 (b) Consultar disciplina — US07, US08
-[u] seleciona; [s] mostra pré-requisitos, status, continuidade.
-<d> optativa? sim -> grupo + quantidade. {b4} outro fluxo -> orienta.
-Protótipo: cards (código/nome/estado) + modal de cadeia + grafo com
-filtros (Obrigatórias/Crítica/Tudo), com optativas destacadas.
+## 4. MoLIC — Modelagem da Interação
 
-### 6.6 (c) Ver ofertas — US09
-[u] escolhe ver ofertas. <d> dentro do período? sim -> [s] lista ofertas +
-horários; não -> [s] informa fora do período (sem horários antigos).
-{b5} sem ofertas -> informa. Protótipo: aluno/matricula.html — lista
-filtrada por pré-requisitos cumpridos, horários, seleção de turmas,
-prévia em grafo; fora do período mostra mensagem e previsão.
+Conversa usuário ↔ sistema: turnos, falas `[u]`/`[s]`, decisões `<d>`,
+quebras `{b}`. Diagramas textuais válidos para este projeto.
 
-### 6.7 (d) Planejamento — US10, US11, US12
-[u] entra no planejador; [s] exibe salvo/vazio. [u] seleciona;
-[s] valida + mostra consequências. <d> salvar? sim -> persiste;
-não -> mantém em memória. {b6} salvar sem login -> pede login.
-{b7} planejamento alheio -> nega (RNF04).
-Protótipo: seleção de turmas na Matrícula (persiste turmas + estados,
-US10/US11) com adicionar/remover (US12), mais o Simulador
-(aluno/simulador.html) para testar caminhos sem afetar o Progresso.
+### 4.1 Convenções
 
-### 6.8 Fechamento
-[u] sair; [s] salva estado e encerra sessão.
+| Símbolo | Significado |
+|---------|-------------|
+| `[u]` | Fala / ação do usuário |
+| `[s]` | Fala / resposta do sistema |
+| `<d>` | Ponto de decisão |
+| `{b}` | Quebra de comunicação |
+| `→` | Continuação |
 
-### 6.9 Coordenador — conversa
-Abertura: [s] pede identificação; [u] informa; [s] carrega fluxos que
-gerencia. {c1} inválidas. {c2} tentar ver dado de aluno -> nega (RNF04).
-Turno: (a) fluxos US01, (b) disciplinas US02, (c) optativas US03,
-(d) ofertas US04, sair.
-(a) cria/edita fluxo (curso, versão), associa disciplinas, persiste,
-disponibiliza ao aluno. {c3} versão duplicada -> alerta.
-(b) cadastra, reutiliza entre fluxos, define prés no fluxo. {c4} ciclo
-A->B->A -> impede. (c) marca obrig/opt, qtd exigida, pré de optativa.
-{c5} qtd maior que disponíveis -> alerta. (d) seleciona ofertadas +
-horários, persiste, disponibiliza na matrícula. {c6} choque -> alerta.
-Protótipo: coordenador/fluxo.html (grade + optativas + prévia),
-disciplina.html (catálogo), matricula.html (período + ofertas).
+### 4.2 Aluno — abertura e turno central
 
-### 6.10 Quebras e rastreio US -> MoLIC
-Tabela: b1 credenciais/RNF04; b2 sem fluxo; b3 concluir sem pré/RF03-RF04;
-b4 outro fluxo/RNF04; b5 sem ofertas/RF05; b6 sem login/RNF03-RNF04;
-b7 alheio/RNF04; c1 credenciais/RNF04; c2 dado de aluno/RNF04;
-c3 duplicado/US01; c4 ciclo/US02; c5 opt/US03; c6 choque/US04.
-Rastreio: US01 6.9(a); US02 6.9(b); US03 6.9(c); US04 6.9(d);
-US05-US06 6.4; US07-US08 6.5; US09 6.6; US10-US12 6.7.
+```
+● Início
+│
+▼
+[s] "Quem é você?" — tela de Login
+[u] informa papel + credencial de demonstração
+│
+├─ {b1} credencial inválida → [s] pede novamente
+├─ {b2} aluno sem curso/versão → [s] leva a Escolher curso ─┐
+│                                                          │
+▼                                                          ▼
+[u] Escolhe curso + versão (US05) → [s] abre turno central ◄┘
+│
+▼
+◆ TURNO CENTRAL — [s] oferece:
+  (a) Ver meu fluxograma │ (b) Consultar disciplina
+  (c) Ver ofertadas │ (d) Montar/editar planejamento │ Sair
+```
 
-## 7. Protótipo de alta fidelidade
+`index.html` + `escolher-curso.html` + sidebar (Progresso / Matrícula /
+Simulador).
 
-### 7.1 Telas
-- Login (index.html, RNF04): seletor de papel Aluno/Coordenador com
-  credencial de demonstração; redireciona (aluno novo -> escolher curso).
-- Escolher curso (escolher-curso.html): curso + versão do fluxo; salva
-  e leva ao fluxograma.
-- Fluxograma do Aluno (aluno/fluxograma.html — US05, US06): colunas por
-  semestre + Optativas; clique alterna estado; % progresso; optativas
-  concluídas; botão de semestres mínimos abre o modal de cadeia crítica;
-  grafo de pré-requisitos navegável.
-- Consulta de disciplina (US07, US08): cards + modal de cadeia + grafo
-  com filtros; mostra prés, status, continuidades, grupo e qtd de optativas.
-- Disciplinas Ofertadas (aluno/matricula.html — US09): lista do período
-  com horários; fora do período, mensagem sem horários antigos; seleção
-  de turmas com prévia em grafo.
-- Planejador (US10, US11, US12): seleção na Matrícula (persiste e permite
-  adicionar/remover) + Simulador independente para testar sem afetar
-  o Progresso; botão salvar com confirmação.
-- Painel do Coordenador (US01–US04): fluxo.html (grade, prés, tipos,
-  qtd de optativas, prévia), disciplina.html (catálogo com busca),
-  matricula.html (período + ofertas + registro).
+### 4.3 Aluno — fluxograma e consulta
 
-### 7.2 Comparação baixa -> alta fidelidade
-Alta fidelidade adotou colunas por semestre + cards coloridos por estado
-+ grafo hierárquico com zoom/arrasto + modais, para comunicar visualmente
-"qual caminho seguir" (critério da cliente).
+```
+◆ (a) Ver meu fluxograma — US05, US06 (RF01, RF02)
+[s] exibe grade por semestres + Optativas, com estados
+    (concluída / em andamento / futura) — aluno/fluxograma.html
+[u] clica numa disciplina → <d> estado atual?
+    futura → em andamento → concluída → futura (ciclo)
+[s] atualiza % progresso + optativas + cadeia crítica + grafo
+{b3} marcar concluída com pré pendente → [s] alerta (previsto)
+→ volta ao turno central
 
-## 8. Design
+◆ (b) Consultar disciplina — US07, US08 (RF03, RF04, RF13, RF14)
+[u] observa card / abre modal cadeia / filtra o grafo
+[s] mostra pré-requisitos + status + continuidades
+<d> é optativa? sim → [s] mostra grupo + qtd exigida
+{b4} disciplina de outro fluxo → [s] orienta a trocar de curso/versão
+→ volta ao turno central
+```
 
-Layout: sidebar escura fixa (navegação + curso/versão) + conteúdo claro
-em cards; grade em colunas horizontais com rolagem.
-Estados: Futura cinza, Em andamento azul, Concluída verde; optativa com
-borda amarela tracejada; crítica em vermelho no grafo; clique alterna.
-Grafo: vis-network, hierárquico esquerda->direita por profundidade de
-pré-requisitos; filtros Obrigatórias/Crítica/Tudo com texto de ajuda;
-zoom por scroll, arrasto para navegar.
-Feedback: botões salvar com confirmação; avisos em banner amarelo;
-estados vazios tracejados. Modais: cadeia crítica, trocar curso, catálogo.
-Dados de exemplo: João, Ana, CC em 8 semestres + optativas, ofertas de
-demonstração, período 2026.2.
+No protótipo a consulta (b) acontece nos próprios cards (código, nome,
+estado), no modal "Cadeia crítica / Semestres mínimos" e no grafo com
+filtros Obrigatórias / Crítica / Tudo.
 
-## 9. Limitações do protótipo
+### 4.4 Aluno — ofertadas e planejamento
 
-Front-end estático sem backend: persistência em localStorage do navegador
-(progresso, turmas, simulação, catálogo, período). Para recomeçar, limpar
-o armazenamento do navegador ou usar Resetar no simulador.
-Dados simulados: 2 cursos, 2 versões, grade de CC, optativas, 6 ofertas,
-período 2026.2. Requer internet (CDN do grafo).
-Funcionalidades previstas no MoLIC e tratadas de forma simplificada no
-protótipo: validação de credenciais, controle de acesso por papel (RNF04),
-alertas de quebra (b3/c3–c6) e compartilhamento total entre coordenador
-e aluno — ficam como evolução para o sistema final.
-Como rodar: abrir `prototipo/index.html` ou servir a pasta `prototipo/`.
+```
+◆ (c) Ver ofertadas — US09 (RF05)
+[u] abre Matrícula — aluno/matricula.html
+<d> dentro do período? (flag do coordenador)
+  sim → [s] lista ofertadas filtradas (só com prés cumpridos,
+          + horários) → [u] pode ir para (d)
+  não → [s] informa fora do período + previsão (sem horários antigos)
+{b5} sem ofertas no período → [s] informa lista vazia
+
+◆ (d) Montar / simular / salvar — US10, US11, US12 (RF06–RF09)
+[u] seleciona turmas → [s] valida prés + mostra prévia em grafo
+[u] adiciona / remove disciplinas (US12)
+<d> quer salvar? sim → [s] persiste (RNF03); não → mantém em sessão
+[u] abre Simulador → testa caminhos sem afetar o Progresso (RF07)
+{b6} salvar sem login → [s] pede login (RNF04)
+{b7} acessar planejamento alheio → [s] nega (RNF04)
+→ volta ao turno central
+
+◆ Fechamento
+[u] Sair → [s] salva estado e encerra sessão → ◉
+```
+
+### 4.5 Coordenador
+
+```
+● Início
+[s] pede identificação → [u] informa credencial
+{c1} inválida → pede novamente
+[s] carrega fluxos que gerencia → ◆ TURNO CENTRAL
+{c2} tentar ver dado de aluno → nega (RNF04)
+
+◆ (a) Gerenciar fluxos — US01 (RF10)
+[u] cria/seleciona fluxo (curso + versão) → [u] associa disciplinas
+→ [s] persiste e disponibiliza ao aluno — coordenador/fluxo.html
+{c3} versão duplicada → [s] alerta
+
+◆ (b) Gerenciar disciplinas — US02 (RF11, RF12)
+[u] cadastra / reutiliza disciplina → [u] define prés no fluxo
+→ [s] atualiza relações — coordenador/disciplina.html
+{c4} ciclo A→B→A → [s] impede
+
+◆ (c) Configurar optativas — US03 (RF13, RF14)
+[u] marca obrigatória/optativa + qtd exigida (+ pré de optativa)
+→ [s] persiste — campo na tela de fluxo
+{c5} qtd maior que disponíveis → [s] alerta
+
+◆ (d) Configurar ofertas — US04 (RF15)
+[u] define período → [u] seleciona ofertadas + horários
+→ [s] persiste e disponibiliza na matrícula — coordenador/matricula.html
+{c6} choque de horário → [s] alerta
+
+◆ Fechamento: [u] Sair → [s] encerra sessão → ◉
+```
+
+### 4.6 Quebras e rastreabilidade
+
+| ID | Quebra | Base |
+|----|--------|------|
+| b1 | Credenciais inválidas (aluno) | RNF04 |
+| b2 | Aluno sem curso/versão | US05 |
+| b3 | Concluir sem pré-requisito | RF03 / RF04 |
+| b4 | Disciplina de outro fluxo | RNF04 |
+| b5 | Sem ofertas no período | RF05 |
+| b6 | Salvar sem login | RNF03 / RNF04 |
+| b7 | Planejamento de outro aluno | RNF04 |
+| c1 | Credenciais inválidas (coordenador) | RNF04 |
+| c2 | Coordenador em dado de aluno | RNF04 |
+| c3 | Fluxo com versão duplicada | US01 |
+| c4 | Ciclo de pré-requisito | US02 |
+| c5 | Optativas além das disponíveis | US03 |
+| c6 | Conflito de horário | US04 |
+
+Rastreio: US01 → 4.5(a) · US02 → 4.5(b) · US03 → 4.5(c) · US04 → 4.5(d) ·
+US05/US06 → 4.3(a) · US07/US08 → 4.3(b) · US09 → 4.4(c) · US10–US12 → 4.4(d).
+
+## 5. Telas do protótipo
+
+| Tela | Arquivo | Histórias | Descrição |
+|------|---------|-----------|-----------|
+| Login | `index.html` | RNF04 | Papel + credencial demo; redireciona |
+| Escolher curso | `escolher-curso.html` | US05 | Curso + versão → fluxograma |
+| Progresso | `aluno/fluxograma.html` | US05, US06 | Grade, estados, % , cadeia crítica, grafo |
+| Matrícula | `aluno/matricula.html` | US09–US12 | Ofertadas, horários, seleção, prévia |
+| Simulador | `aluno/simulador.html` | US07, US10 | Testa caminhos sem afetar o Progresso |
+| Fluxo | `coordenador/fluxo.html` | US01–US03 | Grade, prés, tipos, optativas, prévia |
+| Disciplinas | `coordenador/disciplina.html` | US02 | Catálogo com busca |
+| Ofertas | `coordenador/matricula.html` | US04 | Período + ofertas + registro |
+
+> Baixa → alta fidelidade: colunas por semestre, cards por estado, grafo
+> hierárquico com zoom/arrasto e modais — para comunicar "qual caminho seguir".
+
+## 6. Design
+
+- **Layout:** sidebar escura (navegação + curso/versão) + conteúdo claro em
+  cards; grade em colunas horizontais com rolagem.
+- **Estados:** Futura cinza · Em andamento azul · Concluída verde; optativa
+  com borda amarela; crítica em vermelho no grafo; clique alterna o estado.
+- **Grafo:** hierárquico esquerda → direita por profundidade de pré-requisito;
+  filtros Obrigatórias / Crítica / Tudo; zoom no scroll, arrasto p/ navegar.
+- **Feedback:** salvar com confirmação; avisos em amarelo; vazios tracejados;
+  modais (cadeia crítica, trocar curso, catálogo).
+- **Exemplo:** João, Ana, CC em 8 semestres + optativas, 6 ofertas,
+  período 2026.2.
+
+## 7. Limitações
+
+- Front-end estático, sem backend; persistência no `localStorage`
+  (progresso, turmas, simulação, catálogo, período). Reset: limpar o
+  armazenamento ou usar "Resetar" no simulador.
+- Dados simulados: 2 cursos, 2 versões, grade de CC, optativas, 6 ofertas,
+  período 2026.2. Internet necessária (CDN do grafo).
+- Validação de credenciais, controle total de acesso (RNF04) e alertas de
+  quebra: previstos no MoLIC, simplificados no protótipo — evolução futura.
+
+## 8. Referências
+
+- Repositório: https://github.com/MaurilioComputacaoUECE/prototipo
+- Etapa 1 — entrevista: RF01–RF15, RNF01–RNF04, US01–US12 + INVEST.
+- Protótipo: pasta `prototipo/` (`index.html` como entrada).
