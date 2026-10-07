@@ -66,9 +66,15 @@
     const app = document.getElementById('app');
 
     app.innerHTML = montarLayout('matricula', `
-      <header style="margin-bottom: 24px;">
-        <h1 style="margin: 0;">Matrícula</h1>
-        <p style="color: #64748b; margin: 4px 0 0 0;" id="status-matricula"></p>
+      <header style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
+        <div>
+          <h1 style="margin: 0;">Matrícula</h1>
+          <p style="color: #64748b; margin: 4px 0 0 0;" id="status-matricula"></p>
+        </div>
+        <button id="btn-salvar" title="Salvar matrícula"
+                style="padding: 8px 12px; border-radius: 8px; border: none; background: #3b82f6; color: white; cursor: pointer; font-size: 16px; line-height: 1; flex-shrink: 0;">
+          💾
+        </button>
       </header>
 
       <div id="conteudo-matricula"></div>

@@ -125,15 +125,21 @@ function carregarProximoPeriodo() {
     try {
       const p = JSON.parse(salvo);
       if (p && p.periodo && p.fim) {
-        // Compatível com valores salvos antes de existir o campo "inicio"
-        return { periodo: p.periodo, inicio: p.inicio || periodoMatricula.inicio, fim: p.fim };
+        // Compatível com valores salvos antes de existirem "inicio"/"aberto"
+        return {
+          periodo: p.periodo,
+          inicio: p.inicio || periodoMatricula.inicio,
+          fim: p.fim,
+          aberto: p.aberto !== false
+        };
       }
     } catch (e) {}
   }
   return {
     periodo: periodoMatricula.periodo,
     inicio: periodoMatricula.inicio,
-    fim: periodoMatricula.fim
+    fim: periodoMatricula.fim,
+    aberto: periodoMatricula.aberto
   };
 }
 
@@ -142,6 +148,7 @@ function salvarProximoPeriodo(p) {
   periodoMatricula.periodo = p.periodo;
   periodoMatricula.inicio = p.inicio || '';
   periodoMatricula.fim = p.fim;
+  periodoMatricula.aberto = p.aberto !== false;
 }
 
 // Aplica o valor definido pelo coordenador (tela do aluno passa a usá-lo)
@@ -150,6 +157,7 @@ function salvarProximoPeriodo(p) {
   periodoMatricula.periodo = p.periodo;
   periodoMatricula.inicio = p.inicio || '';
   periodoMatricula.fim = p.fim;
+  periodoMatricula.aberto = p.aberto !== false;
 })();
 
 // ============================================================

@@ -1,12 +1,13 @@
 function montarSidebar(ativo) {
   const menu = [
-    { id: 'fluxograma', nome: 'Fluxograma',           href: 'fluxograma.html' },
-    { id: 'matricula',  nome: 'Matrícula',             href: 'matricula.html' },
+    { id: 'fluxograma', nome: 'Progresso',  icone: '📈', href: 'fluxograma.html' },
+    { id: 'matricula',  nome: 'Matrícula',  icone: '📝', href: 'matricula.html' },
+    { id: 'simulador',  nome: 'Simulador',  icone: '🧪', href: 'simulador.html' },
   ];
 
   const links = menu.map(item => `
     <a href="${item.href}" class="${item.id === ativo ? 'ativo' : ''}">
-      ${item.nome}
+      ${item.icone} ${item.nome}
     </a>
   `).join('');
 

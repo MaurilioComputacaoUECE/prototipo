@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fluxograma — Planejamento Acadêmico</title>
   <link rel="stylesheet" href="../assets/estilo.css">
-  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 </head>
 <body>
 
@@ -19,9 +18,16 @@
   <script>
     const app = document.getElementById('app');
     app.innerHTML = montarLayout('fluxograma', `
-      <header style="margin-bottom: 24px;">
-        <h1 style="margin: 0;">Fluxograma Curricular</h1>
-        <p style="color: #64748b; margin: 4px 0 0 0;">Clique numa disciplina para alternar o estado</p>
+      <header style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
+        <div>
+          <h1 style="margin: 0;">Progresso</h1>
+          <p style="color: #64748b; margin: 4px 0 0 0;">Registre seu progresso academico : clique para alternar o estado das disciplinas</p>
+          <p style="color: #64748b; margin: 4px 0 0 0;">Mantenha esse campo atualizado, ele influenciará nas opções de matrícula</p>
+        </div>
+        <button id="btn-salvar-progresso" title="Salvar progresso"
+                style="padding: 8px 12px; border-radius: 8px; border: none; background: #3b82f6; color: white; cursor: pointer; font-size: 16px; line-height: 1; flex-shrink: 0;">
+          💾
+        </button>
       </header>
 
       <div style="display: flex; gap: 24px; margin-bottom: 24px;">
@@ -38,7 +44,7 @@
           </p>
         </div>
         <button id="btn-cadeia" style="padding: 8px 16px; border-radius: 8px; border: 1px solid #f59e0b; background: #fef3c7; cursor: pointer;">
-          <p style="font-size: 12px; color: #92400e; margin: 0;">Semestres mínimos</p>
+          <p style="font-size: 12px; color: #92400e; margin: 0;">Semestres mínimos p/ formatura</p>
           <p style="font-size: 16px; font-weight: 600; color: #78350f; margin: 0;">
             <span id="semestres-min">0</span>
           </p>
@@ -46,56 +52,6 @@
       </div>
 
       <div id="fluxograma" class="periodo"></div>
-      <div style="margin-top: 40px;">
-        <h2 style="font-size: 14px; text-transform: uppercase; color: #64748b; margin-bottom: 4px;">Caminhos a seguir</h2>
-        <p style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">
-          Veja o que ainda falta cursar e como as disciplinas se conectam por pré-requisitos.
-        </p>
-
-        <div id="abas-grafo" style="display:flex; gap:8px; margin-bottom:8px;">
-        <button class="aba-grafo ativa" data-filtro="obrigatorias">Obrigatórias</button>
-        <button class="aba-grafo aba-critica" data-filtro="critica">Crítica</button>
-        <button class="aba-grafo" data-filtro="tudo">Tudo</button>
-      </div>
-      <p id="hint-grafo" style="font-size:13px; color:#475569; margin:0 0 8px 0; min-height:18px;">
-        Mostrando apenas as obrigatórias que faltam da grade.</p>
-
-        <!-- Texto dinâmico da aba -->
-        <p id="hint-grafo" style="font-size: 12px; color: #64748b; margin: 0 0 8px 0; min-height: 16px;">
-        </p>
-
-        <!-- Dica de uso (fixa) -->
-        <p style="font-size: 12px; color: #64748b; margin: 0 0 10px 0;">
-          💡 Role para dar zoom · Arraste para navegar
-        </p>
-
-        <!-- Legenda -->
-        <div id="legenda-grafo" style="display:flex; gap:16px; align-items:center; font-size:12px; color:#475569; margin-bottom:10px; flex-wrap:wrap;">
-          <span style="display:flex; align-items:center; gap:6px;">
-            <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#dbeafe !important; border:2px solid #3b82f6 !important;"></span>
-            Em andamento
-          </span>
-          <span style="display:flex; align-items:center; gap:6px;">
-            <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#f1f5f9 !important; border:2px solid #cbd5e1 !important;"></span>
-            Obrigatória
-          </span>
-          <span style="display:flex; align-items:center; gap:6px;">
-            <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#fef3c7 !important; border:2px solid #f59e0b !important;"></span>
-            Optativa
-          </span>
-          <span style="display:flex; align-items:center; gap:6px;">
-            <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#dcfce7 !important; border:2px solid #22c55e !important; border-style:dashed !important;"></span>
-            Concluída (pré-req)
-          </span>
-          <span style="display:flex; align-items:center; gap:6px;">
-            <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#fee2e2 !important; border:2px solid #dc2626 !important;"></span>
-            Crítica
-          </span>
-        </div>
-
-        <!-- Grafo -->
-        <div id="grafo-caminhos" style="height: 500px; width: 100%; overflow: hidden; border: 1px dashed #cbd5e1; background: #fafafa; position: relative;"></div>
-      </div>
       <div id="modal-cadeia" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; z-index: 50; padding: 16px;">
         <div style="background: white; border-radius: 12px; padding: 24px; max-width: 600px; width: 100%;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -118,21 +74,11 @@
 
     renderizarFluxograma();
     configurarModal();
-    configurarAbasGrafo();
 
-
-    function aguardarVis(tentativa = 0) {
-      if (typeof vis === 'undefined') {
-        if (tentativa < 30) {
-          setTimeout(() => aguardarVis(tentativa + 1), 200);
-        } else {
-          console.error('vis.js não carregou após 6 segundos');
-        }
-        return;
-      }
-      renderizarGrafo('grafo-caminhos', 'obrigatorias');
-    }
-    aguardarVis();
+    document.getElementById('btn-salvar-progresso').addEventListener('click', () => {
+      salvarEstado();
+      alert('Progresso salvo com sucesso!');
+    });
   </script>
 
 </body>

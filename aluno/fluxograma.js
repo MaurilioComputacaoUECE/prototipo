@@ -1,67 +1,8 @@
 // ============================================================
 // CÁLCULO DA CADEIA CRÍTICA
+// (profundidade e cadeias críticas agora vivem em assets/grafo.js,
+//  compartilhadas com a tela de matrícula)
 // ============================================================
-
-function calcularProfundidades(disciplinas) {
-  const prof = {};
-  const visitando = {};
-
-  function calc(id) {
-    if (prof[id] !== undefined) return prof[id];
-    if (visitando[id]) return 1;
-    visitando[id] = true;
-
-    const d = disciplinas.find(x => x.id === id);
-    if (!d) { visitando[id] = false; return 1; }
-
-    if (d.estado === 'concluida' || d.estado === 'em-andamento') {
-      prof[id] = 0;
-      visitando[id] = false;
-      return 0;
-    }
-
-    let maxPre = 0;
-    d.pre.forEach(p => { maxPre = Math.max(maxPre, calc(p)); });
-    prof[id] = 1 + maxPre;
-    visitando[id] = false;
-    return prof[id];
-  }
-
-  disciplinas.forEach(d => calc(d.id));
-  return prof;
-}
-
-function encontrarCadeiaCritica(disciplinas) {
-  const prof = calcularProfundidades(disciplinas);
-
-  let alvo = null, maxProf = 0;
-  disciplinas.forEach(d => {
-    if (d.estado === 'futura' && prof[d.id] > maxProf) {
-      maxProf = prof[d.id];
-      alvo = d;
-    }
-  });
-
-  if (!alvo) return { semestres: 0, cadeia: [] };
-
-  const cadeia = [];
-  function reconstruir(id) {
-    const d = disciplinas.find(x => x.id === id);
-    if (!d) return;
-    if (d.estado === 'concluida' || d.estado === 'em-andamento') return;
-
-    let melhorPre = null, melhorProf = -1;
-    d.pre.forEach(p => {
-      if (prof[p] > melhorProf) { melhorProf = prof[p]; melhorPre = p; }
-    });
-
-    if (melhorPre) reconstruir(melhorPre);
-    cadeia.push(d);
-  }
-  reconstruir(alvo.id);
-
-  return { semestres: maxProf, cadeia };
-}
 
 // ============================================================
 // RENDER
@@ -125,7 +66,7 @@ function alternarEstado(id) {
   d.estado = CICLO[(idx + 1) % CICLO.length];
   salvarEstado();
   renderizarFluxograma();
-  renderizarGrafo('grafo-caminhos');
+  renderizarGrafo('grafo-caminhos', window._filtroGrafoAtual || 'obrigatorias');
 }
 
 function atualizarIndicadores() {
@@ -136,9 +77,12 @@ function atualizarIndicadores() {
   document.getElementById('progresso').textContent = Math.round((concluidas / total) * 100);
   document.getElementById('optativas-concluidas').textContent = optConcluidas;
 
-  const { semestres, cadeia } = encontrarCadeiaCritica(disciplinas);
+  const { semestres, cadeias } = encontrarCadeiasCriticas(disciplinas);
   document.getElementById('semestres-min').textContent = semestres;
-  window._cadeiaAtual = { semestres, cadeia };
+
+  // Guarda todos os caminhos com a maior profundidade (aba Crítica)
+  window._cadeiaAtual = { semestres, cadeia: cadeias[0] || [] };
+  window._cadeiasCriticas = cadeias;
 }
 
 // ============================================================
@@ -185,21 +129,32 @@ function configurarModal() {
     function configurarAbasGrafo() {
       const abas = document.querySelectorAll('.aba-grafo');
       const hint = document.getElementById('hint-grafo');
-      console.log('configurarAbasGrafo rodou. abas:', abas.length, 'hint:', hint);
       if (!abas.length) return;
 
       const textos = {
         obrigatorias: 'Mostrando apenas as obrigatórias que faltam da grade.',
-        critica:      'Este é o caminho mais longo de pré-requisitos — o que determina quantos semestres ainda faltam até a formatura.',
         tudo:         'Mostrando todas as disciplinas restantes, incluindo optativas (borda tracejada amarela).'
       };
+
+      function textoCritica() {
+        const { semestres, cadeias } = encontrarCadeiasCriticas(disciplinas);
+        if (cadeias.length > 1) {
+          return `Maior profundidade da grade: ${semestres} semestre(s) — ${cadeias.length} disciplinas empatadas, exibindo todos os caminhos.`;
+        }
+        return `Este é o caminho mais longo de pré-requisitos — ${semestres} semestre(s) ainda faltam até a formatura.`;
+      }
 
       abas.forEach(btn => {
         btn.addEventListener('click', () => {
           abas.forEach(b => b.classList.remove('ativa'));
           btn.classList.add('ativa');
+          window._filtroGrafoAtual = btn.dataset.filtro;
           renderizarGrafo('grafo-caminhos', btn.dataset.filtro);
-          if (hint) hint.textContent = textos[btn.dataset.filtro] || '';
+          if (hint) {
+            hint.textContent = btn.dataset.filtro === 'critica'
+              ? textoCritica()
+              : (textos[btn.dataset.filtro] || '');
+          }
         });
       });
     }

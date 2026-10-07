@@ -91,7 +91,8 @@ document.getElementById('btn-periodo').addEventListener('click', () => {
     return;
   }
 
-  salvarProximoPeriodo({ periodo, inicio, fim });
+  // Mantém o estado On/Off definido (sem reabrir o período por acidente)
+  salvarProximoPeriodo({ periodo, inicio, fim, aberto: periodoMatricula.aberto });
   atualizarStatusPeriodo();
 });
 

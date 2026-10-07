@@ -4,6 +4,108 @@
 
 let _networkAtual = null;
 
+// ============================================================
+// PROFUNDIDADE / CADEIAS CRÍTICAS
+// (compartilhado entre fluxograma e matrícula)
+// ============================================================
+
+function calcularProfundidades(disciplinas) {
+  const prof = {};
+  const visitando = {};
+
+  function calc(id) {
+    if (prof[id] !== undefined) return prof[id];
+    if (visitando[id]) return 1;
+    visitando[id] = true;
+
+    const d = disciplinas.find(x => x.id === id);
+    if (!d) { visitando[id] = false; return 1; }
+
+    if (d.estado === 'concluida' || d.estado === 'em-andamento') {
+      prof[id] = 0;
+      visitando[id] = false;
+      return 0;
+    }
+
+    let maxPre = 0;
+    d.pre.forEach(p => { maxPre = Math.max(maxPre, calc(p)); });
+    prof[id] = 1 + maxPre;
+    visitando[id] = false;
+    return prof[id];
+  }
+
+  disciplinas.forEach(d => calc(d.id));
+  return prof;
+}
+
+// Retorna TODOS os caminhos com a maior profundidade
+// (empatados — pode ser mais de um)
+function encontrarCadeiasCriticas(disciplinas) {
+  const prof = calcularProfundidades(disciplinas);
+
+  let maxProf = 0;
+  disciplinas.forEach(d => {
+    if (d.estado === 'futura' && prof[d.id] > maxProf) maxProf = prof[d.id];
+  });
+
+  if (maxProf === 0) return { semestres: 0, cadeias: [] };
+
+  function reconstruir(alvo) {
+    const cadeia = [];
+    function walk(id) {
+      const d = disciplinas.find(x => x.id === id);
+      if (!d) return;
+      if (d.estado === 'concluida' || d.estado === 'em-andamento') return;
+
+      let melhorPre = null, melhorProf = -1;
+      d.pre.forEach(p => {
+        if (prof[p] > melhorProf) { melhorProf = prof[p]; melhorPre = p; }
+      });
+
+      if (melhorPre) walk(melhorPre);
+      cadeia.push(d);
+    }
+    walk(alvo.id);
+    return cadeia;
+  }
+
+  const cadeias = disciplinas
+    .filter(d => d.estado === 'futura' && prof[d.id] === maxProf)
+    .map(reconstruir);
+
+  return { semestres: maxProf, cadeias };
+}
+
+// Nível de cada disciplina → grafo disposto em ordem de profundidade
+function calcularNiveis(visiveis) {
+  const mapa = {};
+  visiveis.forEach(d => { mapa[d.id] = d; });
+
+  const niveis = {};
+  const visitando = {};
+
+  function calcular(id) {
+    if (niveis[id] !== undefined) return niveis[id];
+    if (visitando[id]) return 0;
+    visitando[id] = true;
+
+    const d = mapa[id];
+    if (!d) { visitando[id] = false; return 0; }
+
+    let maxPre = -1;
+    (d.pre || []).forEach(p => {
+      if (mapa[p]) maxPre = Math.max(maxPre, calcular(p));
+    });
+
+    niveis[id] = maxPre + 1;
+    visitando[id] = false;
+    return niveis[id];
+  }
+
+  visiveis.forEach(d => calcular(d.id));
+  return niveis;
+}
+
 function renderizarGrafo(containerId, filtro = 'obrigatorias') {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -14,14 +116,20 @@ function renderizarGrafo(containerId, filtro = 'obrigatorias') {
   let idsCriticos = new Set();
 
   if (filtro === 'critica') {
-    // Usa a cadeia crítica já calculada no fluxograma.js
-    const cadeia = (window._cadeiaAtual && window._cadeiaAtual.cadeia) || [];
-    visiveis = cadeia.slice();
-    visiveis.forEach(d => idsCriticos.add(d.id));
+    // Todas as disciplinas com a MAIOR profundidade (pode haver mais de um caminho)
+    const { cadeias } = encontrarCadeiasCriticas(disciplinas);
 
-    // Inclui pré-reqs concluídos que aparecem no caminho
+    visiveis = [];
+    cadeias.forEach(cadeia => {
+      cadeia.forEach(d => {
+        idsCriticos.add(d.id);
+        if (!visiveis.find(x => x.id === d.id)) visiveis.push(d);
+      });
+    });
+
+    // Inclui pré-reqs concluídos que aparecem nos caminhos
     const extras = [];
-    cadeia.forEach(d => {
+    visiveis.slice().forEach(d => {
       d.pre.forEach(pre => {
         if (idsCriticos.has(pre)) return;
         const dPre = disciplinas.find(x => x.id === pre);
@@ -31,6 +139,30 @@ function renderizarGrafo(containerId, filtro = 'obrigatorias') {
     extras.forEach(d => {
       if (!visiveis.find(x => x.id === d.id)) visiveis.push(d);
     });
+
+  } else if (filtro === 'matricula') {
+    // Prévia da matrícula: o que foi selecionado + o que essa escolha libera
+    const idsSemeados = new Set();
+    ofertas.forEach(o => {
+      if (turmasSelecionadas.has(o.turmaId)) idsSemeados.add(o.disciplinaId);
+    });
+
+    const filhosMap = {};
+    disciplinas.forEach(d => { filhosMap[d.id] = []; });
+    disciplinas.forEach(d => {
+      (d.pre || []).forEach(p => { if (filhosMap[p]) filhosMap[p].push(d.id); });
+    });
+
+    const incluidos = new Set(idsSemeados);
+    const fila = [...idsSemeados];
+    while (fila.length) {
+      const id = fila.shift();
+      (filhosMap[id] || []).forEach(f => {
+        if (!incluidos.has(f)) { incluidos.add(f); fila.push(f); }
+      });
+    }
+
+    visiveis = disciplinas.filter(d => incluidos.has(d.id));
 
   } else if (filtro === 'obrigatorias') {
     visiveis = disciplinas.filter(d => d.tipo !== 'optativa' && d.estado !== 'concluida');
@@ -67,9 +199,54 @@ function renderizarGrafo(containerId, filtro = 'obrigatorias') {
 
   const idsVisiveis = new Set(visiveis.map(d => d.id));
 
+  // Nível de cada nó → colunas em ordem de profundidade (esquerda → direita)
+  const niveis = calcularNiveis(visiveis);
+
   // --- 2. Monta nós ---
-  const nodes = [];
+  // Ordem vertical em cada coluna (LR): MAIOR profundidade primeiro (em cima).
+  // Ramo com menor profundidade "cede" a posição e desce conforme se avança.
+  const ordemOriginal = new Map();
+  disciplinas.forEach((d, i) => ordemOriginal.set(d.id, i));
+
+  // Filhos visíveis (quem depende de mim) e altura = maior cadeia a partir do nó
+  const filhos = {};
+  visiveis.forEach(d => { filhos[d.id] = []; });
   visiveis.forEach(d => {
+    (d.pre || []).forEach(pre => {
+      if (filhos[pre]) filhos[pre].push(d.id);
+    });
+  });
+
+  const altura = {};
+  const visitandoAlt = {};
+  function calcularAltura(id) {
+    if (altura[id] !== undefined) return altura[id];
+    if (visitandoAlt[id]) return 1;
+    visitandoAlt[id] = true;
+    let maxFilhos = 0;
+    (filhos[id] || []).forEach(f => { maxFilhos = Math.max(maxFilhos, calcularAltura(f)); });
+    altura[id] = 1 + maxFilhos;
+    visitandoAlt[id] = false;
+    return altura[id];
+  }
+  visiveis.forEach(d => calcularAltura(d.id));
+
+  const ordenados = visiveis.slice().sort((a, b) => {
+    if (niveis[a.id] !== niveis[b.id]) return niveis[a.id] - niveis[b.id];
+
+    // Maior profundidade total primeiro (nível + cadeia restante até o fim)
+    const totalA = niveis[a.id] + altura[a.id];
+    const totalB = niveis[b.id] + altura[b.id];
+    if (totalB !== totalA) return totalB - totalA;
+    if (altura[b.id] !== altura[a.id]) return altura[b.id] - altura[a.id];
+
+    const difPeriodo = (a.periodo || 99) - (b.periodo || 99);
+    if (difPeriodo !== 0) return difPeriodo;
+    return (ordemOriginal.get(a.id) || 0) - (ordemOriginal.get(b.id) || 0);
+  });
+
+  const nodes = [];
+  ordenados.forEach(d => {
     const emAndamento = d.estado === 'em-andamento';
     const concluida   = d.estado === 'concluida';
     const optativa    = d.tipo === 'optativa';
@@ -91,6 +268,7 @@ function renderizarGrafo(containerId, filtro = 'obrigatorias') {
     const sufixo = concluida ? '\n(✓)' : '';
     nodes.push({
       id: d.id,
+      level: niveis[d.id],
       label: d.nome + sufixo,
       shape: 'box',
       color: { background: bg, border: borda },
