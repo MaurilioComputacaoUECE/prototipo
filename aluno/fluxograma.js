@@ -182,15 +182,27 @@ function configurarModal() {
     if (e.target.id === 'modal-cadeia') modal.style.display = 'none';
   });
 }
-function configurarAbasGrafo() {
-  const abas = document.querySelectorAll('.aba-grafo');
-  if (!abas.length) return;
+    function configurarAbasGrafo() {
+      const abas = document.querySelectorAll('.aba-grafo');
+      const hint = document.getElementById('hint-grafo');
+      console.log('configurarAbasGrafo rodou. abas:', abas.length, 'hint:', hint);
+      if (!abas.length) return;
 
-  abas.forEach(btn => {
-    btn.addEventListener('click', () => {
-      abas.forEach(b => b.classList.remove('ativa'));
-      btn.classList.add('ativa');
-      renderizarGrafo('grafo-caminhos', btn.dataset.filtro);
-    });
-  });
-}
+      const textos = {
+        obrigatorias: 'Mostrando apenas as obrigatórias que faltam da grade.',
+        critica:      'Este é o caminho mais longo de pré-requisitos — o que determina quantos semestres ainda faltam até a formatura.',
+        tudo:         'Mostrando todas as disciplinas restantes, incluindo optativas (borda tracejada amarela).'
+      };
+
+      abas.forEach(btn => {
+        btn.addEventListener('click', () => {
+          abas.forEach(b => b.classList.remove('ativa'));
+          btn.classList.add('ativa');
+          renderizarGrafo('grafo-caminhos', btn.dataset.filtro);
+          if (hint) hint.textContent = textos[btn.dataset.filtro] || '';
+        });
+      });
+    }
+
+  
+  

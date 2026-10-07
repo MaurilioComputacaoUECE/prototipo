@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Disciplinas — Coordenador</title>
+  <link rel="stylesheet" href="../assets/estilo.css">
+</head>
+<body>
+
+  <div class="layout">
+
+    <aside class="sidebar" data-coordenador-ativo="disciplina"></aside>
+    <script src="../assets/sidebar-coordenador.js"></script>
+
+    <main class="conteudo">
+
+      <header style="margin-bottom:24px;">
+        <h1 style="margin:0;">Disciplinas</h1>
+        <p style="color:#64748b; margin:4px 0 0 0;">Catálogo de disciplinas disponíveis para os fluxos curriculares</p>
+      </header>
+
+      <div style="background:white; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
+        <input id="busca" type="text" placeholder="Buscar por código ou nome..."
+               style="flex:1; min-width:220px; padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:14px;">
+        <button id="btn-nova"
+                style="padding:8px 16px; border-radius:8px; border:none; background:#3b82f6; color:white; font-weight:600; cursor:pointer; font-size:14px;">
+          + Nova disciplina
+        </button>
+      </div>
+
+      <div style="background:white; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden;">
+        <div id="lista"></div>
+      </div>
+
+      <p style="font-size:12px; color:#94a3b8; margin-top:12px;">
+        💡 As disciplinas cadastradas aqui ficam disponíveis para serem adicionadas em qualquer fluxo curricular.
+      </p>
+
+    </main>
+  </div>
+
+  <!-- MODAL -->
+  <div id="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); align-items:center; justify-content:center; z-index:50; padding:16px;">
+    <div style="background:white; border-radius:12px; padding:24px; max-width:480px; width:100%; box-shadow:0 20px 50px rgba(0,0,0,0.2); max-height:90vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2 id="titulo-modal" style="margin:0; font-size:18px; color:#1e293b;">Nova disciplina</h2>
+        <button id="fechar-modal" style="background:none; border:none; font-size:24px; cursor:pointer; color:#94a3b8;">×</button>
+      </div>
+
+      <label style="display:block; font-size:13px; font-weight:600; color:#334155; margin-bottom:6px;">Código</label>
+      <input id="input-codigo" type="text" placeholder="Ex: CC204"
+             style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-size:14px; margin-bottom:16px; box-sizing:border-box;">
+
+      <label style="display:block; font-size:13px; font-weight:600; color:#334155; margin-bottom:6px;">Nome da disciplina</label>
+      <input id="input-nome" type="text" placeholder="Ex: Processamento de Linguagem Natural"
+             style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-size:14px; margin-bottom:16px; box-sizing:border-box;">
+
+      <label style="display:block; font-size:13px; font-weight:600; color:#334155; margin-bottom:6px;">
+        Pré-requisitos <span style="font-weight:400; color:#94a3b8;">— opcional, pode ser mais de um</span>
+      </label>
+      <div style="display:flex; gap:8px; margin-bottom:10px;">
+        <select id="select-pre" style="flex:1; min-width:0; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-size:14px; background:white; color:#334155;"></select>
+        <button id="btn-add-pre" type="button"
+                style="padding:10px 14px; border-radius:8px; border:1px dashed #3b82f6; background:#eff6ff; color:#1e40af; cursor:pointer; font-size:13px; font-weight:600; white-space:nowrap;">
+          + Adicionar
+        </button>
+      </div>
+      <div id="lista-pre" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:24px; min-height:26px;"></div>
+
+      <div style="display:flex; gap:12px; justify-content:flex-end;">
+        <button id="btn-cancelar"
+                style="padding:10px 20px; background:white; color:#475569; border:1px solid #cbd5e1; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;">
+          Cancelar
+        </button>
+        <button id="btn-salvar"
+                style="padding:10px 20px; background:#3b82f6; color:white; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">
+          Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/dados.js"></script>
+  <script>
+  // ============================================================
+  // CATÁLOGO (dados.js + alterações salvas pelo coordenador)
+  // ============================================================
+
+  let catalogo = carregarCatalogoCoord();
+  let editandoId = null;
+  let preSelecionadas = [];
+
+  // ============================================================
+  // RENDER
+  // ============================================================
+
+  const listaEl = document.getElementById('lista');
+  const buscaEl = document.getElementById('busca');
+  const modal = document.getElementById('modal');
+
+  function renderizar(filtro = '') {
+    const termo = filtro.toLowerCase().trim();
+    const filtradas = catalogo.filter(d =>
+      !termo || d.id.toLowerCase().includes(termo) || d.nome.toLowerCase().includes(termo)
+    );
+
+    if (filtradas.length === 0) {
+      listaEl.innerHTML = `
+        <div style="padding:40px; text-align:center; color:#94a3b8; font-size:14px;">
+          Nenhuma disciplina encontrada.
+        </div>
+      `;
+      return;
+    }
+
+    listaEl.innerHTML = '';
+    filtradas.forEach((d, i) => {
+      const row = document.createElement('div');
+      row.style.cssText = `
+        display:flex; justify-content:space-between; align-items:center; gap:16px;
+        padding:14px 20px;
+        border-bottom:${i < filtradas.length - 1 ? '1px solid #f1f5f9' : 'none'};
+      `;
+
+      row.innerHTML = `
+        <div style="display:flex; align-items:center; gap:16px; min-width:0; flex:1;">
+          <span style="font-family:monospace; font-size:13px; font-weight:600; color:#1e40af; background:#eff6ff; padding:3px 8px; border-radius:4px; flex-shrink:0;">
+            ${d.id}
+          </span>
+          <div style="min-width:0;">
+            <div style="font-size:14px; color:#334155;">${d.nome}</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:2px;">
+              ${(d.pre && d.pre.length) ? `Pré-req: ${d.pre.join(', ')}` : 'Sem pré-requisito'}
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px; flex-shrink:0;">
+          <button class="btn-acao" data-acao="editar" style="padding:6px 10px; border:1px solid #cbd5e1; background:white; border-radius:6px; cursor:pointer; font-size:13px;">✏️</button>
+          <button class="btn-acao" data-acao="remover" style="padding:6px 10px; border:1px solid #fecaca; background:#fef2f2; color:#b91c1c; border-radius:6px; cursor:pointer; font-size:13px;">🗑️</button>
+        </div>
+      `;
+
+      row.querySelectorAll('.btn-acao').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.dataset.acao === 'editar') abrirParaEditar(d);
+          if (btn.dataset.acao === 'remover') removerDisciplina(d);
+        });
+      });
+
+      listaEl.appendChild(row);
+    });
+  }
+
+  // ============================================================
+  // BUSCA
+  // ============================================================
+
+  buscaEl.addEventListener('input', () => renderizar(buscaEl.value));
+
+  // ============================================================
+  // MODAL — PRÉ-REQUISITOS
+  // ============================================================
+
+  const selectPre = document.getElementById('select-pre');
+  const listaPreEl = document.getElementById('lista-pre');
+
+  function atualizarSelectPre() {
+    const disponiveis = catalogo.filter(d =>
+      d.id !== editandoId && !preSelecionadas.includes(d.id)
+    );
+
+    selectPre.innerHTML = '';
+
+    if (disponiveis.length === 0) {
+      const opt = document.createElement('option');
+      opt.textContent = '— Nenhuma disciplina disponível —';
+      opt.disabled = true;
+      selectPre.appendChild(opt);
+      return;
+    }
+
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Selecione uma disciplina...';
+    selectPre.appendChild(placeholder);
+
+    disponiveis.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.id;
+      opt.textContent = `${d.id} — ${d.nome}`;
+      selectPre.appendChild(opt);
+    });
+  }
+
+  function renderizarChips() {
+    listaPreEl.innerHTML = '';
+
+    if (preSelecionadas.length === 0) {
+      listaPreEl.innerHTML = '<span style="font-size:12px; color:#94a3b8;">Nenhum pré-requisito adicionado.</span>';
+      atualizarSelectPre();
+      return;
+    }
+
+    preSelecionadas.forEach(codigo => {
+      const chip = document.createElement('span');
+      chip.style.cssText = 'display:inline-flex; align-items:center; gap:6px; padding:4px 10px; background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; border-radius:999px; font-size:12px; font-weight:600;';
+      chip.innerHTML = `${codigo} <button type="button" title="Remover" style="border:none; background:none; color:#60a5fa; cursor:pointer; font-size:13px; line-height:1; padding:0;">✕</button>`;
+      chip.querySelector('button').addEventListener('click', () => {
+        preSelecionadas = preSelecionadas.filter(c => c !== codigo);
+        renderizarChips();
+      });
+      listaPreEl.appendChild(chip);
+    });
+
+    atualizarSelectPre();
+  }
+
+  document.getElementById('btn-add-pre').addEventListener('click', () => {
+    const codigo = selectPre.value;
+    if (!codigo) return;
+    if (!preSelecionadas.includes(codigo)) preSelecionadas.push(codigo);
+    renderizarChips();
+  });
+
+  // ============================================================
+  // MODAL — ABRIR / SALVAR / EDITAR / REMOVER
+  // ============================================================
+
+  function abrirModal(titulo, codigo, nome, pre, codigoBloqueado) {
+    const inputCodigo = document.getElementById('input-codigo');
+    document.getElementById('titulo-modal').textContent = titulo;
+    inputCodigo.value = codigo;
+    inputCodigo.disabled = codigoBloqueado;
+    inputCodigo.style.background = codigoBloqueado ? '#f1f5f9' : 'white';
+    document.getElementById('input-nome').value = nome;
+    preSelecionadas = (pre || []).slice();
+    renderizarChips();
+    modal.style.display = 'flex';
+  }
+
+  document.getElementById('btn-nova').addEventListener('click', () => {
+    editandoId = null;
+    abrirModal('Nova disciplina', '', '', [], false);
+  });
+
+  function abrirParaEditar(d) {
+    editandoId = d.id;
+    abrirModal('Editar disciplina', d.id, d.nome, d.pre, true);
+  }
+
+  function removerDisciplina(d) {
+    if (!confirm(`Remover "${d.id} — ${d.nome}" do catálogo?`)) return;
+    catalogo = catalogo.filter(x => x.id !== d.id);
+    catalogo.forEach(x => { x.pre = (x.pre || []).filter(c => c !== d.id); });
+    salvarCatalogoCoord(catalogo);
+    renderizar(buscaEl.value);
+  }
+
+  document.getElementById('fechar-modal').addEventListener('click', () => modal.style.display = 'none');
+  document.getElementById('btn-cancelar').addEventListener('click', () => modal.style.display = 'none');
+
+  modal.addEventListener('click', e => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+
+  document.getElementById('btn-salvar').addEventListener('click', () => {
+    const codigo = document.getElementById('input-codigo').value.trim().toUpperCase();
+    const nome = document.getElementById('input-nome').value.trim();
+
+    if (!codigo || !nome) {
+      alert('Preencha o código e o nome da disciplina.');
+      return;
+    }
+
+    if (editandoId) {
+      const d = catalogo.find(x => x.id === editandoId);
+      if (d) {
+        d.nome = nome;
+        d.pre = preSelecionadas.slice();
+      }
+    } else {
+      if (catalogo.some(x => x.id === codigo)) {
+        alert(`Já existe uma disciplina com o código ${codigo}.`);
+        return;
+      }
+      catalogo.unshift({ id: codigo, nome, pre: preSelecionadas.slice() });
+    }
+
+    salvarCatalogoCoord(catalogo);
+    modal.style.display = 'none';
+    renderizar(buscaEl.value);
+  });
+
+  // ============================================================
+  // INICIALIZAÇÃO
+  // ============================================================
+
+  renderizar();
+  </script>
+
+</body>
+</html>

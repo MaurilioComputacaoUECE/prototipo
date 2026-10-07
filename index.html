@@ -5,6 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login — Planejamento Acadêmico</title>
   <link rel="stylesheet" href="assets/estilo.css">
+  <style>
+    .papeis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+    .papel {
+      display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+      padding: 14px 12px; border: 2px solid #e2e8f0; border-radius: 10px;
+      background: white; cursor: pointer; text-align: left;
+      font-family: inherit; transition: all 0.15s;
+    }
+    .papel:hover { border-color: #93c5fd; background: #f8fafc; }
+    .papel.ativo { border-color: #3b82f6; background: #eff6ff; }
+    .papel .icone { font-size: 20px; line-height: 1; }
+    .papel .nome { font-size: 14px; font-weight: 700; color: #1e293b; margin-top: 6px; }
+    .papel .desc { font-size: 11px; color: #64748b; }
+    @media (max-width: 420px) { .papeis { grid-template-columns: 1fr; } }
+  </style>
 </head>
 <body>
 
@@ -12,14 +27,31 @@
     <div style="background: white; border-radius: 12px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
 
       <h1 style="margin: 0 0 8px 0; font-size: 22px; color: #1e293b;">Planejamento Acadêmico</h1>
-      <p style="margin: 0 0 28px 0; color: #64748b; font-size: 14px;">
+      <p style="margin: 0 0 20px 0; color: #64748b; font-size: 14px;">
         Entre com suas credenciais
       </p>
 
       <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+        Entrar como
+      </label>
+
+      <div class="papeis">
+        <button type="button" class="papel ativo" data-papel="aluno">
+          <span class="icone">🎓</span>
+          <span class="nome">Aluno</span>
+          <span class="desc">Fluxograma e matrícula</span>
+        </button>
+        <button type="button" class="papel" data-papel="coordenador">
+          <span class="icone">📋</span>
+          <span class="nome">Coordenador</span>
+          <span class="desc">Fluxo, disciplinas e ofertas</span>
+        </button>
+      </div>
+
+      <label id="label-login" style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
         Matrícula
       </label>
-      <input type="text" value="2024001234"
+      <input id="input-login" type="text" value="2024001234"
              style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; margin-bottom: 16px; box-sizing: border-box;">
 
       <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
@@ -37,7 +69,38 @@
   </div>
 
   <script>
+    // ============================================================
+    // PAPEL (Aluno / Coordenador)
+    // ============================================================
+
+    let papel = 'aluno';
+    const inputLogin = document.getElementById('input-login');
+    const labelLogin = document.getElementById('label-login');
+
+    const papeis = {
+      aluno:      { label: 'Matrícula', valor: '2024001234' },
+      coordenador:{ label: 'E-mail',    valor: 'ana@coordenador.edu' }
+    };
+
+    document.querySelectorAll('.papel').forEach(btn => {
+      btn.addEventListener('click', () => {
+        papel = btn.dataset.papel;
+        document.querySelectorAll('.papel').forEach(b => b.classList.toggle('ativo', b === btn));
+        labelLogin.textContent = papeis[papel].label;
+        inputLogin.value = papeis[papel].valor;
+      });
+    });
+
+    // ============================================================
+    // ENTRAR
+    // ============================================================
+
     document.getElementById('btn-entrar').addEventListener('click', () => {
+      if (papel === 'coordenador') {
+        window.location.href = 'coordenador/fluxo.html';
+        return;
+      }
+
       const curso = localStorage.getItem('aluno_curso');
       const versao = localStorage.getItem('aluno_versao');
 

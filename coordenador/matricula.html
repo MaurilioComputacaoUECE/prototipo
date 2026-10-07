@@ -1,0 +1,186 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matrícula — Coordenador</title>
+  <link rel="stylesheet" href="../assets/estilo.css">
+  <style>
+    .abas { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
+    .aba { padding: 10px 16px; font-size: 14px; font-weight: 600; color: #94a3b8; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color 0.2s, border-color 0.2s; }
+    .aba.ativa { color: #1e40af; border-bottom-color: #3b82f6; }
+    .aba:hover:not(.ativa) { color: #64748b; }
+    .aba-content { display: none; animation: fadeIn 0.2s; }
+    .aba-content.ativa { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 20px; }
+    .card-title { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }
+    .btn { padding: 8px 14px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-size: 13px; font-weight: 500; color: #334155; transition: all 0.2s; }
+    .btn:hover { border-color: #64748b; background: #f8fafc; }
+    .btn-primario { background: #3b82f6; border-color: #3b82f6; color: white; }
+    .btn-primario:hover { background: #2563eb; }
+    .select { padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; background: white; color: #334155; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+    .table-container { overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px; max-height: 320px; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+    th { background: #f8fafc; font-weight: 600; color: #475569; position: sticky; top: 0; }
+    tr:hover { background: #f8fafc; }
+    .badge-ofertada { background: #dcfce7; color: #15803d; }
+    .badge-nao-ofertada { background: #f1f5f9; color: #64748b; }
+    .card input[type="text"] { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; color: #334155; box-sizing: border-box; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" data-coordenador-ativo="ofertas"></aside>
+    <script src="../assets/sidebar-coordenador.js"></script>
+
+    <main class="conteudo">
+      <header style="margin-bottom: 24px;">
+        <h1 style="margin: 0;">Matrícula</h1>
+        <p style="color: #64748b; margin: 4px 0 0 0;">Defina as ofertas de disciplinas do fluxo.</p>
+      </header>
+
+      <!-- PRÓXIMO PERÍODO DE MATRÍCULA -->
+      <div class="card" style="margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
+          <div>
+            <p class="card-title" style="margin-bottom:4px;">📅 Próximo período de matrícula</p>
+            <p style="color:#64748b; font-size:13px; margin:0;">Período exibido para os alunos na tela de matrícula.</p>
+          </div>
+          <div style="display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap;">
+            <div>
+              <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px;">Período</label>
+              <input id="input-periodo" type="text" placeholder="Ex: 2026.2"
+                     style="width:110px; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px;">Matrícula de</label>
+              <input id="input-periodo-inicio" type="text" placeholder="Ex: 10/02/2026"
+                     style="width:135px; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px;">Matrícula até</label>
+              <input id="input-periodo-fim" type="text" placeholder="Ex: 15/02/2026"
+                     style="width:135px; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; box-sizing:border-box;">
+            </div>
+            <button id="btn-periodo" class="btn btn-primario">Salvar período</button>
+          </div>
+        </div>
+        <p id="status-periodo" style="margin:12px 0 0 0; font-size:13px; color:#15803d; font-weight:600;"></p>
+      </div>
+
+      <div class="abas">
+        <div class="aba ativa" data-aba="ofertas">📋 Ofertas</div>
+        <div class="aba" data-aba="registro">📊 Registro</div>
+      </div>
+
+      <div class="aba-content ativa" id="aba-ofertas">
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
+            <div>
+              <p class="card-title">Nova oferta de disciplina</p>
+              <p style="color:#64748b; font-size:13px;">Clique em Salvar para registrar a oferta.</p>
+            </div>
+            <button class="btn btn-primario" id="btn-salvar">💾 Salvar oferta</button>
+          </div>
+
+          <div class="card" style="padding:12px 16px; margin-bottom:12px;">
+            <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px;">Disciplina</label>
+            <select id="input-disciplina" class="select" style="width:100%;"></select>
+          </div>
+
+          <div class="grid-2">
+            <div class="card" style="padding:12px 16px;">
+              <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px;">ID da Turma</label>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <select id="input-turma" class="select" style="flex:1; min-width:0;"></select>
+                <span id="nome-disciplina-lado" style="font-size:12px; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:55%;"></span>
+              </div>
+            </div>
+            <div class="card" style="padding:12px 16px;">
+              <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px;">Dias</label>
+              <select id="input-dias" class="select" style="width:100%;">
+                <option value="SEG-QUA" selected>SEG-QUA</option>
+                <option value="TER-QUI">TER-QUI</option>
+                <option value="SEG-SEX">SEG-SEX</option>
+                <option value="SEG-QUA-SEX">SEG-QUA-SEX</option>
+                <option value="TER-QUI-SEX">TER-QUI-SEX</option>
+                <option value="SEG">SEG</option>
+                <option value="TER">TER</option>
+                <option value="QUA">QUA</option>
+                <option value="QUI">QUI</option>
+                <option value="SEX">SEX</option>
+                <option value="SAB">SAB</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-top:12px;">
+            <div class="card" style="padding:12px 16px;">
+              <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px;">Horário</label>
+              <select id="input-horario" class="select">
+                <option value="AB">AB</option>
+                <option value="CD">CD</option>
+                <option value="EF">EF</option>
+                <option value="ABCD">ABDC</option>
+                <option value="ABCDEF">ABDCEF</option>
+              </select>
+            </div>
+            <div class="card" style="padding:12px 16px;">
+              <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px;">Turno</label>
+              <select id="input-turno" class="select">
+                <option value="MANHA">MANHA</option>
+                <option value="TARDE">TARDE</option>
+                <option value="NOITE">NOITE</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-top:16px; border:1px solid #e2e8f0; border-radius:8px; padding:12px;">
+            <p style="font-size:12px; font-weight:600; color:#64748b; margin:0 0 8px 0;">Pré-visualização da oferta</p>
+            <p style="font-size:14px; color:#334155; margin:0;" id="preview-offerta">Você ainda não salvou nenhuma oferta.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="aba-content" id="aba-registro">
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
+            <div>
+              <p class="card-title">Ofertas registradas</p>
+              <p style="color:#64748b; font-size:13px;">Histórico de disciplinas ofertadas no período.</p>
+            </div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID da Turma</th>
+                  <th>Dias</th>
+                  <th>Horário</th>
+                  <th>Turno</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="lista-ofertas">
+                <tr>
+                  <td colspan="5" style="text-align:center; color:#94a3b8;">Nenhuma oferta registrada ainda.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-voltar" style="margin-top:24px; display:inline-block; padding:10px 20px; border-radius:8px; border:1px solid #e2e8f0; background:white; cursor:pointer; font-size:14px; font-weight:600; color:#334155;" onclick="window.history.back()">← Voltar</button>
+    </main>
+  </div>
+
+  <script src="../assets/dados.js"></script>
+  <script src="matricula.js"></script>
+</body>
+</html>
+

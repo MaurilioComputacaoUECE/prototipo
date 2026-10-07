@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fluxo Curricular — Coordenador</title>
+  <link rel="stylesheet" href="../assets/estilo.css">
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+</head>
+<body>
+
+  <div class="layout">
+
+    <aside class="sidebar" data-coordenador-ativo="fluxo"></aside>
+    <script src="../assets/sidebar-coordenador.js"></script>
+
+    <main class="conteudo">
+
+      <header style="margin-bottom:24px;">
+        <h1 style="margin:0;">Fluxo Curricular</h1>
+        <p style="color:#64748b; margin:4px 0 0 0;">Configure a grade, os pré-requisitos e as optativas</p>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-top:16px; padding:12px 16px; background:white; border:1px solid #e2e8f0; border-radius:10px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <label style="font-size:13px; color:#64748b;">Fluxo:</label>
+            <select id="select-fluxo" style="padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; background:white; font-size:14px; font-weight:500;">
+              <option value="cc-2025.1">Ciência da Computação · 2025.1</option>
+              <option value="cc-2026.1">Ciência da Computação · 2026.1</option>
+              <option value="es-2025.1">Engenharia de Software · 2025.1</option>
+            </select>
+            <button style="padding:8px 14px; border-radius:8px; border:1px dashed #3b82f6; background:#eff6ff; color:#1e40af; cursor:pointer; font-size:14px; font-weight:500;">
+              + Novo fluxo
+            </button>
+          </div>
+          <button id="btn-salvar" style="padding:8px 16px; border-radius:8px; border:none; background:#3b82f6; color:white; font-weight:600; cursor:pointer; font-size:14px;">
+            Salvar
+          </button>
+        </div>
+      </header>
+
+      <div style="background:white; border:1px solid #e2e8f0; border-radius:12px; padding:16px 20px; margin-bottom:20px; display:flex; gap:24px; align-items:center;">
+        <div>
+          <p style="font-size:12px; color:#64748b; margin:0;">Optativas necessárias</p>
+          <input id="input-optativas" type="number" value="4" min="0"
+                 style="width:80px; padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:16px; font-weight:600; margin-top:4px;">
+        </div>
+        <div style="border-left:1px solid #e2e8f0; padding-left:24px;">
+          <p style="font-size:12px; color:#64748b; margin:0;">Disciplinas na grade</p>
+          <p id="contador-disciplinas" style="font-size:20px; font-weight:600; margin:4px 0 0 0; color:#1e293b;">0</p>
+        </div>
+        <div style="border-left:1px solid #e2e8f0; padding-left:24px;">
+          <p style="font-size:12px; color:#64748b; margin:0;">Obrigatórias / Optativas</p>
+          <p id="contador-tipos" style="font-size:20px; font-weight:600; margin:4px 0 0 0; color:#1e293b;">0 / 0</p>
+        </div>
+      </div>
+
+      <div id="grade" class="periodo" style="flex:1; min-width:0;"></div>
+
+      <div style="margin-top:40px;">
+        <h2 style="font-size:14px; text-transform:uppercase; color:#64748b; margin-bottom:4px;">Prévia do fluxo</h2>
+        <p style="font-size:13px; color:#475569; margin:0 0 12px 0;">Veja como as disciplinas se conectam pelos pré-requisitos.</p>
+        <p style="font-size:12px; color:#64748b; margin:0 0 12px 0;">💡 Role para dar zoom · Arraste para navegar</p>
+        <div id="grafo-preview" style="height:420px; width:100%; overflow:hidden; border:1px dashed #cbd5e1; background:#fafafa; position:relative;"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- MODAL — ADICIONAR DISCIPLINA -->
+  <div id="modal-adicionar" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); align-items:center; justify-content:center; z-index:50; padding:16px;">
+    <div style="background:white; border-radius:12px; padding:24px; max-width:480px; width:100%; box-shadow:0 20px 50px rgba(0,0,0,0.2);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div>
+          <h2 style="margin:0; font-size:18px; color:#1e293b;">Adicionar disciplina</h2>
+          <p id="subtitulo-adicionar" style="margin:4px 0 0 0; font-size:13px; color:#64748b;"></p>
+        </div>
+        <button id="fechar-adicionar" style="background:none; border:none; font-size:24px; cursor:pointer; color:#94a3b8;">×</button>
+      </div>
+
+      <label style="display:block; font-size:13px; font-weight:600; color:#334155; margin-bottom:6px;">Disciplina</label>
+      <select id="select-adicionar" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-size:14px; background:white; color:#334155; box-sizing:border-box; margin-bottom:24px;"></select>
+
+      <div style="display:flex; gap:12px; justify-content:flex-end;">
+        <button id="btn-cancelar-adicionar"
+                style="padding:10px 20px; background:white; color:#475569; border:1px solid #cbd5e1; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;">
+          Cancelar
+        </button>
+        <button id="btn-confirmar-adicionar"
+                style="padding:10px 20px; background:#3b82f6; color:white; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">
+          + Adicionar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ============================================================
+  // DADOS FAKE
+  // ============================================================
+
+  const fluxos = {
+    'cc-2025.1': {
+      optativasNecessarias: 4,
+      grade: [
+        { id: 'CC117', nome: 'Cálculo Diferencial e Integral I', periodo: 1, tipo: 'obrigatoria', pre: [] },
+        { id: 'CC118', nome: 'Geometria Analítica', periodo: 1, tipo: 'obrigatoria', pre: [] },
+        { id: 'CC116', nome: 'Matemática Discreta', periodo: 1, tipo: 'obrigatoria', pre: [] },
+        { id: 'CC119', nome: 'Organização de Computadores', periodo: 1, tipo: 'obrigatoria', pre: [] },
+        { id: 'CC115', nome: 'Programação e Algoritmos', periodo: 1, tipo: 'obrigatoria', pre: [] },
+        { id: 'CC123', nome: 'Álgebra Linear para Computação', periodo: 2, tipo: 'obrigatoria', pre: ['CC118'] },
+        { id: 'CC121', nome: 'Arquitetura de Computadores', periodo: 2, tipo: 'obrigatoria', pre: ['CC119'] },
+        { id: 'CC122', nome: 'Cálculo Diferencial e Integral II', periodo: 2, tipo: 'obrigatoria', pre: ['CC117'] },
+        { id: 'CC124', nome: 'Física para Computação', periodo: 2, tipo: 'obrigatoria', pre: ['CC117'] },
+        { id: 'CC125', nome: 'Lógica para Computação', periodo: 2, tipo: 'obrigatoria', pre: ['CC116'] },
+        { id: 'CC120', nome: 'Programação Orientada a Objeto', periodo: 2, tipo: 'obrigatoria', pre: ['CC115'] },
+        { id: 'CC128', nome: 'Cálculo Diferencial e Integral III', periodo: 3, tipo: 'obrigatoria', pre: ['CC122'] },
+        { id: 'CC129', nome: 'Computação Gráfica', periodo: 3, tipo: 'obrigatoria', pre: ['CC123'] },
+        { id: 'CC126', nome: 'Estrutura de Dados', periodo: 3, tipo: 'obrigatoria', pre: ['CC120'] },
+        { id: 'CC130', nome: 'Probabilidade e Estatística', periodo: 3, tipo: 'obrigatoria', pre: ['CC122'] },
+        { id: 'CC127', nome: 'Sistemas Operacionais', periodo: 3, tipo: 'obrigatoria', pre: ['CC121'] },
+        { id: 'CC131', nome: 'Teoria dos Autômatos e Ling. Formais', periodo: 3, tipo: 'obrigatoria', pre: ['CC125'] },
+        { id: 'CC134', nome: 'Avaliação de Desempenho', periodo: 4, tipo: 'obrigatoria', pre: ['CC130'] },
+        { id: 'CC137', nome: 'Banco de Dados', periodo: 4, tipo: 'obrigatoria', pre: ['CC120'] },
+        { id: 'CC135', nome: 'Cálculo Numérico', periodo: 4, tipo: 'obrigatoria', pre: ['CC128'] },
+        { id: 'CC132', nome: 'Engenharia de Software', periodo: 4, tipo: 'obrigatoria', pre: ['CC120'] },
+        { id: 'CC136', nome: 'Teoria da Computabilidade', periodo: 4, tipo: 'obrigatoria', pre: ['CC131'] },
+        { id: 'CC133', nome: 'Teoria dos Grafos', periodo: 4, tipo: 'obrigatoria', pre: ['CC126'] },
+        { id: 'CC141', nome: 'Análise e Projeto de Software', periodo: 5, tipo: 'obrigatoria', pre: ['CC132'] },
+        { id: 'CC140', nome: 'Inteligência Computacional', periodo: 5, tipo: 'obrigatoria', pre: ['CC131'] },
+        { id: 'CC138', nome: 'Programação Concorrente e Paralela', periodo: 5, tipo: 'obrigatoria', pre: ['CC127'] },
+        { id: 'CC142', nome: 'Projeto e Análise de Algoritmos', periodo: 5, tipo: 'obrigatoria', pre: ['CC133'] },
+        { id: 'CC139', nome: 'Redes de Computadores', periodo: 5, tipo: 'obrigatoria', pre: ['CC134'] },
+        { id: 'CC147', nome: 'Compiladores', periodo: 6, tipo: 'obrigatoria', pre: ['CC136'] },
+        { id: 'CC145', nome: 'Interação Humano Computador', periodo: 6, tipo: 'obrigatoria', pre: ['CC132'] },
+        { id: 'CC143', nome: 'Programação Matemática', periodo: 6, tipo: 'obrigatoria', pre: ['CC135'] },
+        { id: 'CC146', nome: 'Sistemas Distribuídos', periodo: 6, tipo: 'obrigatoria', pre: ['CC139'] },
+        { id: 'CC149', nome: 'Ciência de Dados', periodo: 7, tipo: 'obrigatoria', pre: ['CC140'] },
+        { id: 'CC151', nome: 'Pesquisa em Computação', periodo: 7, tipo: 'obrigatoria', pre: ['CC142'] },
+        { id: 'CC153', nome: 'Projeto Final', periodo: 8, tipo: 'obrigatoria', pre: ['CC151'] },
+        { id: 'CC159', nome: 'Gerência de Projetos', periodo: 5, tipo: 'optativa', pre: ['CC141'] },
+        { id: 'CC158', nome: 'Segurança em Redes', periodo: 6, tipo: 'optativa', pre: ['CC139'] },
+        { id: 'CC109', nome: 'Redes Neurais Artificiais', periodo: 6, tipo: 'optativa', pre: [] }
+      ]
+    },
+    'cc-2026.1': { optativasNecessarias: 4, grade: [] },
+    'es-2025.1': { optativasNecessarias: 3, grade: [] }
+  };
+
+  const catalogo = [
+    { id: 'CC117', nome: 'Cálculo Diferencial e Integral I' },
+    { id: 'CC118', nome: 'Geometria Analítica' },
+    { id: 'CC116', nome: 'Matemática Discreta' },
+    { id: 'CC119', nome: 'Organização de Computadores' },
+    { id: 'CC115', nome: 'Programação e Algoritmos' },
+    { id: 'CC123', nome: 'Álgebra Linear para Computação' },
+    { id: 'CC121', nome: 'Arquitetura de Computadores' },
+    { id: 'CC122', nome: 'Cálculo Diferencial e Integral II' },
+    { id: 'CC124', nome: 'Física para Computação' },
+    { id: 'CC125', nome: 'Lógica para Computação' },
+    { id: 'CC120', nome: 'Programação Orientada a Objeto' },
+    { id: 'CC128', nome: 'Cálculo Diferencial e Integral III' },
+    { id: 'CC129', nome: 'Computação Gráfica' },
+    { id: 'CC126', nome: 'Estrutura de Dados' },
+    { id: 'CC130', nome: 'Probabilidade e Estatística' },
+    { id: 'CC127', nome: 'Sistemas Operacionais' },
+    { id: 'CC131', nome: 'Teoria dos Autômatos e Ling. Formais' },
+    { id: 'CC134', nome: 'Avaliação de Desempenho' },
+    { id: 'CC137', nome: 'Banco de Dados' },
+    { id: 'CC135', nome: 'Cálculo Numérico' },
+    { id: 'CC132', nome: 'Engenharia de Software' },
+    { id: 'CC136', nome: 'Teoria da Computabilidade' },
+    { id: 'CC133', nome: 'Teoria dos Grafos' },
+    { id: 'CC141', nome: 'Análise e Projeto de Software' },
+    { id: 'CC140', nome: 'Inteligência Computacional' },
+    { id: 'CC138', nome: 'Programação Concorrente e Paralela' },
+    { id: 'CC142', nome: 'Projeto e Análise de Algoritmos' },
+    { id: 'CC139', nome: 'Redes de Computadores' },
+    { id: 'CC147', nome: 'Compiladores' },
+    { id: 'CC145', nome: 'Interação Humano Computador' },
+    { id: 'CC143', nome: 'Programação Matemática' },
+    { id: 'CC146', nome: 'Sistemas Distribuídos' },
+    { id: 'CC149', nome: 'Ciência de Dados' },
+    { id: 'CC151', nome: 'Pesquisa em Computação' },
+    { id: 'CC153', nome: 'Projeto Final' },
+    { id: 'CC159', nome: 'Gerência de Projetos' },
+    { id: 'CC158', nome: 'Segurança em Redes' },
+    { id: 'CC109', nome: 'Redes Neurais Artificiais' },
+    { id: 'CC154', nome: 'Extensão I' },
+    { id: 'CC155', nome: 'Extensão II' },
+    { id: 'CC156', nome: 'Extensão III' },
+    { id: 'CC157', nome: 'Extensão IV' },
+    { id: 'CC203', nome: 'Extensão V' },
+    { id: 'CC152', nome: 'Estágio' },
+    { id: 'CC150', nome: 'Administração e Empreend. p/ Computação' },
+    { id: 'CC148', nome: 'Informática na Sociedade e Ética' },
+    { id: 'CC144', nome: 'Processamento de Imagens' }
+  ];
+
+  // ============================================================
+  // ESTADO
+  // ============================================================
+
+  let fluxoAtual = null;
+
+  // ============================================================
+  // INICIALIZAÇÃO
+  // ============================================================
+
+  const selectFluxo = document.getElementById('select-fluxo');
+  const inputOpt = document.getElementById('input-optativas');
+
+  selectFluxo.addEventListener('change', () => carregarFluxo(selectFluxo.value));
+  inputOpt.addEventListener('input', () => {
+    if (fluxoAtual) fluxoAtual.optativasNecessarias = parseInt(inputOpt.value) || 0;
+  });
+
+  document.getElementById('btn-salvar').addEventListener('click', () => {
+    alert('Fluxo salvo (protótipo — nada é persistido).');
+  });
+
+  carregarFluxo('cc-2025.1');
+
+  // ============================================================
+  // CARREGAR FLUXO
+  // ============================================================
+
+  function carregarFluxo(id) {
+    fluxoAtual = JSON.parse(JSON.stringify(fluxos[id] || { optativasNecessarias: 0, grade: [] }));
+    inputOpt.value = fluxoAtual.optativasNecessarias;
+    renderizarGrade();
+    atualizarContadores();
+    renderizarPreview();
+  }
+
+  // ============================================================
+  // GRADE
+  // ============================================================
+
+  function renderizarGrade() {
+    const container = document.getElementById('grade');
+    container.innerHTML = '';
+
+    const periodos = [...new Set(fluxoAtual.grade.map(d => d.periodo))].sort((a, b) => a - b);
+    if (periodos.length === 0) periodos.push(1);
+
+    periodos.forEach(periodo => {
+      const coluna = document.createElement('div');
+      coluna.className = 'coluna';
+      coluna.innerHTML = `<h2>${periodo}º Semestre</h2>`;
+
+      fluxoAtual.grade
+        .filter(d => d.periodo === periodo)
+        .forEach(d => coluna.appendChild(criarCard(d)));
+
+      const btn = document.createElement('button');
+      btn.textContent = '+ Adicionar';
+      btn.style.cssText = 'width:100%; padding:8px; margin-top:4px; border:1px dashed #cbd5e1; background:white; color:#64748b; border-radius:8px; cursor:pointer; font-size:12px;';
+      btn.addEventListener('click', () => abrirModalAdicionar(periodo));
+      coluna.appendChild(btn);
+
+      container.appendChild(coluna);
+    });
+  }
+
+  function criarCard(d) {
+    const card = document.createElement('div');
+    card.className = 'disciplina ' + (d.tipo === 'optativa' ? 'optativa' : '');
+    card.style.cssText = 'background:white; border-color:#cbd5e1; color:#334155;';
+    card.innerHTML = `
+      <p class="codigo">${d.id}</p>
+      <p class="nome">${d.nome}</p>
+      <div style="display:flex; gap:6px; margin-top:8px;">
+        <select class="select-tipo" style="flex:1; padding:4px 6px; border:1px solid #cbd5e1; border-radius:4px; font-size:11px; background:white;">
+          <option value="obrigatoria" ${d.tipo === 'obrigatoria' ? 'selected' : ''}>Obrigatória</option>
+          <option value="optativa" ${d.tipo === 'optativa' ? 'selected' : ''}>Optativa</option>
+        </select>
+        <button class="btn-remover" style="padding:4px 8px; border:1px solid #fecaca; background:#fef2f2; color:#b91c1c; border-radius:4px; cursor:pointer; font-size:11px;">🗑️</button>
+      </div>
+    `;
+    card.querySelector('.select-tipo').addEventListener('change', e => {
+      d.tipo = e.target.value;
+      renderizarGrade(); atualizarContadores(); renderizarPreview();
+    });
+    card.querySelector('.btn-remover').addEventListener('click', () => {
+      fluxoAtual.grade = fluxoAtual.grade.filter(x => x.id !== d.id);
+      renderizarGrade(); atualizarContadores(); renderizarPreview();
+    });
+    return card;
+  }
+
+  // ============================================================
+  // ADICIONAR DISCIPLINA (janela no mesmo padrão da tela de ofertas)
+  // ============================================================
+
+  const modalAdicionar = document.getElementById('modal-adicionar');
+  const selectAdicionar = document.getElementById('select-adicionar');
+  let periodoAlvo = null;
+
+  function abrirModalAdicionar(periodo) {
+    periodoAlvo = periodo;
+
+    const usados = new Set(fluxoAtual.grade.map(d => d.id));
+    const disponiveis = catalogo.filter(d => !usados.has(d.id));
+
+    selectAdicionar.innerHTML = '';
+
+    if (disponiveis.length === 0) {
+      const opt = document.createElement('option');
+      opt.disabled = true;
+      opt.textContent = '— Todas as disciplinas já estão na grade —';
+      selectAdicionar.appendChild(opt);
+    } else {
+      disponiveis.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = d.nome;
+        selectAdicionar.appendChild(opt);
+      });
+    }
+
+    document.getElementById('subtitulo-adicionar').textContent =
+      `Será adicionada ao ${periodo}º semestre`;
+
+    modalAdicionar.style.display = 'flex';
+  }
+
+  document.getElementById('fechar-adicionar').addEventListener('click', () => modalAdicionar.style.display = 'none');
+  document.getElementById('btn-cancelar-adicionar').addEventListener('click', () => modalAdicionar.style.display = 'none');
+
+  modalAdicionar.addEventListener('click', e => {
+    if (e.target === modalAdicionar) modalAdicionar.style.display = 'none';
+  });
+
+  document.getElementById('btn-confirmar-adicionar').addEventListener('click', () => {
+    const d = catalogo.find(x => x.id === selectAdicionar.value);
+    if (!d || periodoAlvo === null) return;
+
+    fluxoAtual.grade.push({ id: d.id, nome: d.nome, periodo: periodoAlvo, tipo: 'obrigatoria', pre: [] });
+    modalAdicionar.style.display = 'none';
+
+    renderizarGrade();
+    atualizarContadores();
+    renderizarPreview();
+  });
+
+  // ============================================================
+  // CONTADORES
+  // ============================================================
+
+  function atualizarContadores() {
+    const total = fluxoAtual.grade.length;
+    const ob = fluxoAtual.grade.filter(d => d.tipo === 'obrigatoria').length;
+    const op = fluxoAtual.grade.filter(d => d.tipo === 'optativa').length;
+    document.getElementById('contador-disciplinas').textContent = total;
+    document.getElementById('contador-tipos').textContent = `${ob} / ${op}`;
+  }
+
+  // ============================================================
+  // PRÉVIA (grafo)
+  // ============================================================
+
+  function renderizarPreview() {
+    if (typeof vis === 'undefined') return;
+    const container = document.getElementById('grafo-preview');
+    const grade = fluxoAtual.grade;
+    const ids = new Set(grade.map(d => d.id));
+
+    const nodes = grade.map(d => ({
+      id: d.id,
+      label: d.nome,
+      shape: 'box',
+      color: {
+        background: d.tipo === 'optativa' ? '#fef3c7' : '#f1f5f9',
+        border: d.tipo === 'optativa' ? '#f59e0b' : '#cbd5e1'
+      },
+      font: { size: 11, color: '#334155' },
+      borderWidth: 2,
+      borderDashes: d.tipo === 'optativa' ? [5, 5] : false,
+      widthConstraint: { minimum: 120, maximum: 180 },
+      heightConstraint: { minimum: 40 }
+    }));
+
+    const edges = [];
+    grade.forEach(d => {
+      (d.pre || []).forEach(pre => {
+        if (ids.has(pre)) edges.push({ from: pre, to: d.id, arrows: 'to', color: { color: '#94a3b8' }, width: 2 });
+      });
+    });
+
+    const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+    const options = {
+      layout: { hierarchical: { enabled: true, direction: 'LR', sortMethod: 'directed', levelSeparation: 180, nodeSpacing: 100, treeSpacing: 140 } },
+      physics: false,
+      interaction: { hover: true, zoomView: true, dragView: true, dragNodes: false },
+      edges: { smooth: { type: 'cubicBezier' } }
+    };
+
+    container.innerHTML = '';
+    const net = new vis.Network(container, data, options);
+    net.once('afterDrawing', () => {
+      const pos = net.getPositions();
+      const keys = Object.keys(pos);
+      if (!keys.length) return;
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      keys.forEach(k => {
+        const p = pos[k];
+        if (p.x < minX) minX = p.x;
+        if (p.x > maxX) maxX = p.x;
+        if (p.y < minY) minY = p.y;
+        if (p.y > maxY) maxY = p.y;
+      });
+      const larg = (maxX - minX) + 200;
+      const escala = Math.min(container.clientWidth / larg, 1.0);
+      const cx = minX - (30 / escala) + (container.clientWidth / escala) / 2;
+      const cy = (minY + maxY) / 2;
+      net.moveTo({ scale: escala, position: { x: cx, y: cy }, animation: false });
+    });
+  }
+  </script>
+
+</body>
+</html>

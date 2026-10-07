@@ -109,8 +109,70 @@ const ofertas = [
 const periodoMatricula = {
   aberto: true,
   periodo: '2026.2',
+  inicio: '10/02/2026',
   fim: '15/02/2026'
 };
+
+// ============================================================
+// PRÓXIMO PERÍODO DE MATRÍCULA (definido pelo coordenador)
+// ============================================================
+
+const CHAVE_PERIODO_MATRICULA = 'coord_proximo_periodo';
+
+function carregarProximoPeriodo() {
+  const salvo = localStorage.getItem(CHAVE_PERIODO_MATRICULA);
+  if (salvo) {
+    try {
+      const p = JSON.parse(salvo);
+      if (p && p.periodo && p.fim) {
+        // Compatível com valores salvos antes de existir o campo "inicio"
+        return { periodo: p.periodo, inicio: p.inicio || periodoMatricula.inicio, fim: p.fim };
+      }
+    } catch (e) {}
+  }
+  return {
+    periodo: periodoMatricula.periodo,
+    inicio: periodoMatricula.inicio,
+    fim: periodoMatricula.fim
+  };
+}
+
+function salvarProximoPeriodo(p) {
+  localStorage.setItem(CHAVE_PERIODO_MATRICULA, JSON.stringify(p));
+  periodoMatricula.periodo = p.periodo;
+  periodoMatricula.inicio = p.inicio || '';
+  periodoMatricula.fim = p.fim;
+}
+
+// Aplica o valor definido pelo coordenador (tela do aluno passa a usá-lo)
+(function () {
+  const p = carregarProximoPeriodo();
+  periodoMatricula.periodo = p.periodo;
+  periodoMatricula.inicio = p.inicio || '';
+  periodoMatricula.fim = p.fim;
+})();
+
+// ============================================================
+// CATÁLOGO DO COORDENADOR (disciplinas + pré-requisitos)
+// Compartilhado entre disciplina.html e matricula.html
+// ============================================================
+
+const CHAVE_CATALOGO_COORD = 'coord_catalogo_disciplinas';
+
+function carregarCatalogoCoord() {
+  const salvo = localStorage.getItem(CHAVE_CATALOGO_COORD);
+  if (salvo) {
+    try {
+      const lista = JSON.parse(salvo);
+      if (Array.isArray(lista) && lista.length) return lista;
+    } catch (e) {}
+  }
+  return disciplinas.map(d => ({ id: d.id, nome: d.nome, pre: (d.pre || []).slice() }));
+}
+
+function salvarCatalogoCoord(lista) {
+  localStorage.setItem(CHAVE_CATALOGO_COORD, JSON.stringify(lista));
+}
 
 // ============================================================
 // TURMAS SELECIONADAS
