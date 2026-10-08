@@ -277,6 +277,7 @@ US05/US06 → 4.3(a) · US07/US08 → 4.3(b) · US09 → 4.4(c) · US10–US12 �
 
 ## 8. Referências
 
+- **Protótipo online:** [Acessar o protótipo](https://mauriliocomputacaouece.github.io/prototipo/)
 - Repositório: https://github.com/MaurilioComputacaoUECE/prototipo
 - Etapa 1 — entrevista: RF01–RF15, RNF01–RNF04, US01–US12 + INVEST.
 - Protótipo: pasta `prototipo/` (`index.html` como entrada).
