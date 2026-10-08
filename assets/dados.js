@@ -94,12 +94,12 @@ const disciplinas = [
 // ============================================================
 
 const ofertas = [
-  { turmaId: 'CC115-A', disciplinaId: 'CC115', turma: 'A', horario: 'ab/manhã/seg-qua', sala: '302', vagas: 40 },
-  { turmaId: 'CC117-A', disciplinaId: 'CC117', turma: 'A', horario: 'cd/tarde/ter-qui', sala: '205', vagas: 35 },
-  { turmaId: 'CC120-A', disciplinaId: 'CC120', turma: 'A', horario: 'cd/tarde/ter-qui', sala: '401', vagas: 30 },
-  { turmaId: 'CC126-A', disciplinaId: 'CC126', turma: 'A', horario: 'ef/noite/seg-qua', sala: '108', vagas: 45 },
-  { turmaId: 'CC137-A', disciplinaId: 'CC137', turma: 'A', horario: 'ef/tarde/sex',     sala: 'Lab 3', vagas: 20 },
-  { turmaId: 'CC132-A', disciplinaId: 'CC132', turma: 'A', horario: 'gh/noite/ter-qui', sala: '501', vagas: 25 },
+  { turmaId: 'CC115-A', disciplinaId: 'CC115', turma: 'A', horario: 'AB/MANHÃ/SEG-QUA', sala: '302', vagas: 40 },
+  { turmaId: 'CC117-A', disciplinaId: 'CC117', turma: 'A', horario: 'CD/TARDE/TER-QUI', sala: '205', vagas: 35 },
+  { turmaId: 'CC120-A', disciplinaId: 'CC120', turma: 'A', horario: 'CD/TARDE/TER-QUI', sala: '401', vagas: 30 },
+  { turmaId: 'CC126-A', disciplinaId: 'CC126', turma: 'A', horario: 'EF/NOITE/SEG-QUA', sala: '108', vagas: 45 },
+  { turmaId: 'CC137-A', disciplinaId: 'CC137', turma: 'A', horario: 'ABCD/TARDE/SEX',     sala: 'Lab 3', vagas: 20 },
+  { turmaId: 'CC132-A', disciplinaId: 'CC132', turma: 'A', horario: 'AB/NOITE/TER-QUI', sala: '501', vagas: 25 },
 ];
 
 // ============================================================
