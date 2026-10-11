@@ -97,7 +97,7 @@ function calcularNiveis(visiveis) {
       if (mapa[p]) maxPre = Math.max(maxPre, calcular(p));
     });
 
-    niveis[id] = maxPre + 1;
+    niveis[id] = (d.periodo === 99 ? 99 : (d.periodo || 0));
     visitando[id] = false;
     return niveis[id];
   }
@@ -105,6 +105,8 @@ function calcularNiveis(visiveis) {
   visiveis.forEach(d => calcular(d.id));
   return niveis;
 }
+
+function preTitle(d){ var ps=d.pre||[]; if(!ps.length) return "Sem pre-requisitos"; return "Pre-requisitos: " + ps.map(function(c){ var p=disciplinas.find(function(x){return x.id===c}); return p ? (c + " - " + p.nome) : c; }).join("; ");}
 
 function renderizarGrafo(containerId, filtro = 'obrigatorias') {
   const container = document.getElementById(containerId);
@@ -270,6 +272,7 @@ function renderizarGrafo(containerId, filtro = 'obrigatorias') {
       id: d.id,
       level: niveis[d.id],
       label: d.nome + sufixo,
+      title: preTitle(d),
       shape: 'box',
       color: { background: bg, border: borda },
       font: { size: 12, color: cor },
@@ -328,7 +331,7 @@ function renderizarGrafo(containerId, filtro = 'obrigatorias') {
     physics: false,
     interaction: {
       hover: true,
-      zoomView: true,
+      zoomView: true, minZoom: 0.25, maxZoom: 2.0, zoomSpeed: 0.6,
       dragView: true,
       dragNodes: false
     },

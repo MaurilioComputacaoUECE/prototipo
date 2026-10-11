@@ -90,6 +90,7 @@
   let catalogo = carregarCatalogoCoord();
   let editandoId = null;
   let preSelecionadas = [];
+  function preNomes(pres){ var r=[]; for(var i=0;i<pres.length;i++){ var p=null; for(var j=0;j<catalogo.length;j++){ if(catalogo[j].id===pres[i]){p=catalogo[j];break;} } r.push(p?(pres[i]+String.fromCharCode(32,45,32)+p.nome):pres[i]); } return r; }
 
   // ============================================================
   // RENDER
@@ -131,7 +132,7 @@
           <div style="min-width:0;">
             <div style="font-size:14px; color:#334155;">${d.nome}</div>
             <div style="font-size:11px; color:#94a3b8; margin-top:2px;">
-              ${(d.pre && d.pre.length) ? `Pré-req: ${d.pre.join(', ')}` : 'Sem pré-requisito'}
+              ${(d.pre && d.pre.length) ? `Pré-req: ${preNomes(d.pre).join('; ')}` : 'Sem pré-requisito'}
             </div>
           </div>
         </div>

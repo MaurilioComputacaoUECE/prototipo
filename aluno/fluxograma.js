@@ -106,7 +106,7 @@ function configurarModal() {
       cadeia.forEach((d, i) => {
         const item = document.createElement('span');
         item.style.cssText = 'display:inline-block; padding:6px 12px; border-radius:8px; background:#dbeafe; color:#1e40af; font-size:13px; margin:2px;';
-        item.textContent = d.nome;
+        item.textContent = d.id+String.fromCharCode(32,45,32)+d.nome;
         container.appendChild(item);
         if (i < cadeia.length - 1) {
           const seta = document.createElement('span');

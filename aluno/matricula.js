@@ -52,14 +52,14 @@ function renderizarMatricula() {
       ${botaoTogglePeriodo()}
       <div class="vazio">
         <p style="font-size: 16px; margin: 0 0 8px 0;">Período de matrícula fechado.</p>
-        <p style="margin: 0;">As ofertas estarão disponíveis em ${periodoMatricula.fim}.</p>
+        <p style="margin: 0;">As ofertas estarão disponíveis quando o período abrir.</p>
       </div>
     `;
     configurarTogglePeriodo();
     return;
   }
 
-  statusEl.innerHTML = `🟢 Matrícula ${periodoMatricula.periodo} aberta até ${periodoMatricula.fim}`;
+  statusEl.innerHTML = `🟢 Matrícula ${periodoMatricula.periodo} aberta`;
 
   const ofertasDisponiveis = ofertas.filter(o => {
     const d = disciplinas.find(x => x.id === o.disciplinaId);
