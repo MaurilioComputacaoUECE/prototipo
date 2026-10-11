@@ -62,7 +62,7 @@ npx serve prototipo
 | RF01 | Visualizar o fluxo curricular | Progresso (`aluno/fluxograma.html`) |
 | RF02 | Identificar concluídas / em andamento / futuras | Cards por estado + % de progresso |
 | RF03 | Consultar pré-requisitos | Cards + grafo + modal de cadeia crítica |
-| RF04 | Ver o que pode cursar a partir dos prés cumpridos | Grafo (filtros) + Matrícula filtrada |
+| RF04 | Ver o que pode cursar a partir dos prés cumpridos | Grafo único (Simulador) + Matrícula filtrada |
 | RF05 | Ver ofertadas e horários na matrícula | `aluno/matricula.html` (+ estado fora do período) |
 | RF06 | Selecionar disciplinas p/ o planejamento | Seleção de turmas na Matrícula |
 | RF07 | Simular o percurso | `aluno/simulador.html` (independente do Progresso) |
@@ -143,12 +143,12 @@ Simulador).
     (concluída / em andamento / futura) — aluno/fluxograma.html
 [u] clica numa disciplina → <d> estado atual?
     futura → em andamento → concluída → futura (ciclo)
-[s] atualiza % progresso + optativas + cadeia crítica + grafo
+[s] atualiza % progresso + optativas + cadeia crítica
 {b3} marcar concluída com pré pendente → [s] alerta (previsto)
 → volta ao turno central
 
 ◆ (b) Consultar disciplina — US07, US08 (RF03, RF04, RF13, RF14)
-[u] observa card / abre modal cadeia / filtra o grafo
+[u] observa card / abre modal cadeia / navega no grafo
 [s] mostra pré-requisitos + status + continuidades
 <d> é optativa? sim → [s] mostra grupo + qtd exigida
 {b4} disciplina de outro fluxo → [s] orienta a trocar de curso/versão
@@ -156,8 +156,8 @@ Simulador).
 ```
 
 No protótipo a consulta (b) acontece nos próprios cards (código, nome,
-estado), no modal "Cadeia crítica / Semestres mínimos" e no grafo com
-filtros Obrigatórias / Crítica / Tudo.
+estado), no modal "Cadeia crítica / Semestres mínimos" e no grafo único do
+Simulador, onde o caminho crítico aparece sempre destacado em vermelho.
 
 ### 4.4 Aluno — ofertadas e planejamento
 
@@ -171,7 +171,8 @@ filtros Obrigatórias / Crítica / Tudo.
 {b5} sem ofertas no período → [s] informa lista vazia
 
 ◆ (d) Montar / simular / salvar — US10, US11, US12 (RF06–RF09)
-[u] seleciona turmas → [s] valida prés + mostra prévia em grafo
+[u] seleciona turmas → [s] valida prés e persiste a seleção (a prévia em
+grafo acontece no Simulador)
 [u] adiciona / remove disciplinas (US12)
 <d> quer salvar? sim → [s] persiste (RNF03); não → mantém em sessão
 [u] abre Simulador → testa caminhos sem afetar o Progresso (RF07)
@@ -208,7 +209,7 @@ filtros Obrigatórias / Crítica / Tudo.
 {c5} qtd maior que disponíveis → [s] alerta
 
 ◆ (d) Configurar ofertas — US04 (RF15)
-[u] define período → [u] seleciona ofertadas + horários
+[u] abre/fecha o período → [u] seleciona ofertadas + horários
 → [s] persiste e disponibiliza na matrícula — coordenador/matricula.html
 {c6} choque de horário → [s] alerta
 
@@ -242,8 +243,8 @@ US05/US06 → 4.3(a) · US07/US08 → 4.3(b) · US09 → 4.4(c) · US10–US12 �
 |------|---------|-----------|-----------|
 | Login | `index.html` | RNF04 | Papel + credencial demo; redireciona |
 | Escolher curso | `escolher-curso.html` | US05 | Curso + versão → fluxograma |
-| Progresso | `aluno/fluxograma.html` | US05, US06 | Grade, estados, % , cadeia crítica, grafo |
-| Matrícula | `aluno/matricula.html` | US09–US12 | Ofertadas, horários, seleção, prévia |
+| Progresso | `aluno/fluxograma.html` | US05, US06 | Grade, estados, %, cadeia crítica |
+| Matrícula | `aluno/matricula.html` | US09–US12 | Ofertadas (turma, horário, sala), seleção — sem grafo |
 | Simulador | `aluno/simulador.html` | US07, US10 | Testa caminhos sem afetar o Progresso |
 | Fluxo | `coordenador/fluxo.html` | US01–US03 | Grade, prés, tipos, optativas, prévia |
 | Disciplinas | `coordenador/disciplina.html` | US02 | Catálogo com busca |
@@ -258,8 +259,12 @@ US05/US06 → 4.3(a) · US07/US08 → 4.3(b) · US09 → 4.4(c) · US10–US12 �
   cards; grade em colunas horizontais com rolagem.
 - **Estados:** Futura cinza · Em andamento azul · Concluída verde; optativa
   com borda amarela; crítica em vermelho no grafo; clique alterna o estado.
-- **Grafo:** hierárquico esquerda → direita por profundidade de pré-requisito;
-  filtros Obrigatórias / Crítica / Tudo; zoom no scroll, arrasto p/ navegar.
+- **Grafo:** hierárquico esquerda → direita, colunas por semestre com
+  faixas rotuladas (1º, 2º… e Optativas); visão única sem abas, caminho
+  crítico sempre em vermelho; zoom limitado (0,15x–2,0x), arrasto p/ navegar.
+- **Simulador:** histórico real (concluídas no Progresso) travado com
+  cadeado; as demais alternam no ciclo completo (futura → em andamento →
+  concluída → futura); sincroniza com o Progresso a cada abertura.
 - **Feedback:** salvar com confirmação; avisos em amarelo; vazios tracejados;
   modais (cadeia crítica, trocar curso, catálogo).
 - **Exemplo:** João, Ana, CC em 8 semestres + optativas, 6 ofertas,

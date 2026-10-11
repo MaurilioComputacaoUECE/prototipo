@@ -208,6 +208,71 @@ function renderizarGrafo(containerId) {
     return (ordemOriginal.get(a.id) || 0) - (ordemOriginal.get(b.id) || 0);
   });
 
+  // --- 2.1 Posicionamento (x/y explícitos) ---
+  // Mesmo visual do layout automático (colunas por semestre, cadeias retas),
+  // MAS com bifurcações expandindo em ramos distintos: cada subárvore ocupa
+  // sua própria faixa de linhas — um ramo fica visivelmente abaixo do outro,
+  // em vez de tudo alinhado numa única reta.
+  const COL_W = 200;  // = antigo levelSeparation do vis
+  const ROW_H = 110;  // = antigo nodeSpacing do vis
+
+  // Pai primário de cada nó: o pré-requisito visível mais próximo (maior nível)
+  const paiPrimario = {};
+  const filhosPrimarios = {};
+  visiveis.forEach(d => {
+    let melhor = null, melhorNivel = -1;
+    (d.pre || []).forEach(pre => {
+      if (niveis[pre] === undefined) return; // pré-requisito não está visível
+      if (niveis[pre] > melhorNivel) { melhorNivel = niveis[pre]; melhor = pre; }
+    });
+    paiPrimario[d.id] = melhor;
+    if (melhor) {
+      if (!filhosPrimarios[melhor]) filhosPrimarios[melhor] = [];
+      filhosPrimarios[melhor].push(d.id);
+    }
+  });
+
+  // Filhos de cada pai em ordem de semestre (e de cadastro)
+  Object.keys(filhosPrimarios).forEach(p => {
+    filhosPrimarios[p].sort((a, b) => {
+      const da = visiveis.find(x => x.id === a);
+      const db = visiveis.find(x => x.id === b);
+      const pa = da.periodo || 99, pb = db.periodo || 99;
+      if (pa !== pb) return pa - pb;
+      return (ordemOriginal.get(a) || 0) - (ordemOriginal.get(b) || 0);
+    });
+  });
+
+  // Aloca linhas em faixas contíguas por subárvore:
+  // - bifurcação → cada ramo ocupa sua própria faixa, um abaixo do outro;
+  // - pai alinhado ao primeiro filho → cadeias seguem retas na horizontal.
+  const linhas = {};
+  const alocados = {};
+  let proximaLinha = 0;
+  function alocarSubarvore(id) {
+    if (alocados[id]) return;
+    alocados[id] = true;
+    const filhos = filhosPrimarios[id] || [];
+    if (!filhos.length) {
+      linhas[id] = proximaLinha++;
+      return;
+    }
+    filhos.forEach(alocarSubarvore);
+    linhas[id] = linhas[filhos[0]];
+  }
+  const raizes = visiveis
+    .filter(d => !paiPrimario[d.id])
+    .sort((a, b) => {
+      const pa = a.periodo || 99, pb = b.periodo || 99;
+      if (pa !== pb) return pa - pb;
+      return (ordemOriginal.get(a.id) || 0) - (ordemOriginal.get(b.id) || 0);
+    });
+  raizes.forEach(d => alocarSubarvore(d.id));
+  // Nós que não alcançaram nenhuma raiz (ciclos — defensivo): vão no fim
+  visiveis.forEach(d => {
+    if (linhas[d.id] === undefined) linhas[d.id] = proximaLinha++;
+  });
+
   const nodes = [];
   ordenados.forEach(d => {
     const emAndamento = d.estado === 'em-andamento';
@@ -231,7 +296,8 @@ function renderizarGrafo(containerId) {
     const sufixo = concluida ? '\n(✓)' : '';
     nodes.push({
       id: d.id,
-      level: niveis[d.id],
+      x: (niveis[d.id] - 1) * COL_W, // coluna = semestre
+      y: linhas[d.id] * ROW_H,       // faixa da subárvore
       label: d.nome + sufixo,
       title: preTitle(d),
       shape: 'box',
@@ -274,21 +340,8 @@ function renderizarGrafo(containerId) {
     edges: new vis.DataSet(edges)
   };
 
-  // Espaçamento fixo (sem filtros/abas)
-  const levelSep = 200;
-  const nodeSpc  = 110;
-
+  // Posições x/y explícitas (colunas por semestre + faixas por subárvore)
   const options = {
-    layout: {
-      hierarchical: {
-        enabled: true,
-        direction: 'LR',
-        sortMethod: 'directed',
-        levelSeparation: levelSep,
-        nodeSpacing: nodeSpc,
-        treeSpacing: 160
-      }
-    },
     physics: false,
     interaction: {
       hover: true,

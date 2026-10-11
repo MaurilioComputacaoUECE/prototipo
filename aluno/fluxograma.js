@@ -46,11 +46,17 @@ function renderizarFluxograma() {
   atualizarIndicadores();
 }
 
+// N7 — no Simulador, apenas o histórico REAL do aluno fica travado;
+// avanços que existem só na simulação seguem o ciclo completo.
+function ehHistoricoReal(d) {
+  return !!window.MODO_SIMULADOR &&
+    !!(window.ESTADO_REAL && window.ESTADO_REAL[d.id] === 'concluida');
+}
+
 // Extrai a criação do card pra reutilizar
 function criarCardDisciplina(d) {
   const card = document.createElement('div');
-  // N7 — no Simulador, concluída é histórico e não pode ser alterada
-  const travada = !!window.MODO_SIMULADOR && d.estado === 'concluida';
+  const travada = ehHistoricoReal(d);
   card.className = `disciplina ${d.estado} ${d.tipo === 'optativa' ? 'optativa' : ''}`;
   card.innerHTML = `
     <p class="codigo">${d.id}${travada ? ' 🔒' : ''}</p>
@@ -62,7 +68,7 @@ function criarCardDisciplina(d) {
     card.style.opacity = '0.75';
     card.title = 'Disciplina concluída: faz parte do histórico e não pode ser desfeita no simulador.';
   } else if (window.MODO_SIMULADOR) {
-    card.title = 'Clique para alternar entre Futura e Em andamento (simulação)';
+    card.title = 'Clique para avançar (simulação): futura → em andamento → concluída → futura';
   }
   card.addEventListener('click', () => alternarEstado(d.id));
   return card;
@@ -72,17 +78,14 @@ function alternarEstado(id) {
   const d = disciplinas.find(x => x.id === id);
   if (!d) return;
 
-  // N7 — Simulador: concluídas são travadas (histórico sem desfazer)
-  if (window.MODO_SIMULADOR && d.estado === 'concluida') return;
+  // N7 — no Simulador, o histórico REAL (concluídas no Progresso) é
+  // travado; avanços simulados usam o ciclo completo:
+  // futura → em andamento → concluída → futura (assim o grafo e o
+  // caminho crítico se atualizam a cada avanço da simulação).
+  if (window.MODO_SIMULADOR && ehHistoricoReal(d)) return;
 
-  if (window.MODO_SIMULADOR) {
-    // No simulador só alterna: futura ↔ em andamento
-    d.estado = d.estado === 'futura' ? 'em-andamento' : 'futura';
-  } else {
-    // Progresso real: ciclo completo (futura → em andamento → concluída → ...)
-    const idx = CICLO.indexOf(d.estado);
-    d.estado = CICLO[(idx + 1) % CICLO.length];
-  }
+  const idx = CICLO.indexOf(d.estado);
+  d.estado = CICLO[(idx + 1) % CICLO.length];
 
   salvarEstado();
   renderizarFluxograma();

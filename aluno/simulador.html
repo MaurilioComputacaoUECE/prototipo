@@ -134,11 +134,23 @@
       if (salvo) {
         try { mapa = JSON.parse(salvo); } catch (e) {}
       }
-      if (!mapa) {
-        mapa = {};
-        disciplinas.forEach(d => { mapa[d.id] = d.estado; });
-      }
-      disciplinas.forEach(d => { d.estado = mapa[d.id] || 'futura'; });
+      if (!mapa) mapa = {};
+
+      // Guarda o estado REAL do Progresso (antes de sobrepor com a
+      // simulação) — é ele que define o que fica travado com cadeado.
+      window.ESTADO_REAL = {};
+      disciplinas.forEach(d => { window.ESTADO_REAL[d.id] = d.estado; });
+
+      // Sincroniza a simulação com o progresso REAL (fonte da verdade):
+      // - o que avançou no Progresso (em andamento / concluída) SOBRESCREVE
+      //   a simulação — histórico consolidado não pode ficar para trás;
+      // - avanços que existem apenas na simulação (real ainda "futura") são
+      //   preservados, para não perder o cenário "e se..." salvo.
+      disciplinas.forEach(d => {
+        const real = d.estado;      // já carregado do Progresso (dados.js)
+        const sim  = mapa[d.id];
+        d.estado = (real !== 'futura') ? real : (sim || 'futura');
+      });
 
       // Passa a salvar apenas na chave da simulação
       salvarEstado = function () {
@@ -147,6 +159,8 @@
         localStorage.setItem('sim_disciplinas_estado', JSON.stringify(m));
       };
       salvarTurmasSelecionadas = function () {}; // simulação não mexe nas turmas reais
+
+      salvarEstado(); // grava a sincronização na chave da simulação
     })();
 
     // Reinicia a simulação a partir do progresso real
