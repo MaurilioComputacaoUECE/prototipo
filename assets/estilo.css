@@ -150,34 +150,3 @@ body {
   border: 1px dashed #cbd5e1;
   background: #fafafa;
 }
-
-.aba-grafo {
-  padding: 6px 14px;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  background: white;
-  color: #475569;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.aba-grafo:hover {
-  border-color: #3b82f6;
-  color: #1e40af;
-}
-.aba-grafo.ativa {
-  background: #1e293b;
-  border-color: #1e293b;
-  color: white;
-}
-
-/* Aba crítica: vermelha quando ativa */
-.aba-grafo.aba-critica:hover {
-  border-color: #dc2626;
-  color: #991b1b;
-}
-.aba-grafo.aba-critica.ativa {
-  background: #dc2626;
-  border-color: #dc2626;
-  color: white;
-}

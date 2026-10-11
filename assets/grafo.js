@@ -1,8 +1,23 @@
 // ============================================================
-// GRAFO COMPARTILHADO — com filtros (obrigatorias / critica / tudo)
+// GRAFO COMPARTILHADO — visão única (sem abas/filtros)
+// Caminho crítico sempre destacado em vermelho (N5)
 // ============================================================
 
 let _networkAtual = null;
+
+// ============================================================
+// N2 — LIMITES DE ZOOM
+// O vis-network atual não aceita zoomMin/zoomMax nas options
+// (eram opções do vis.js antigo). Aplicamos um clamp no evento 'zoom'.
+// ============================================================
+function limitarZoom(network, min, max) {
+  network.on('zoom', () => {
+    const escala = network.getScale();
+    if (escala < min || escala > max) {
+      network.moveTo({ scale: Math.min(Math.max(escala, min), max), animation: false });
+    }
+  });
+}
 
 // ============================================================
 // PROFUNDIDADE / CADEIAS CRÍTICAS
@@ -77,7 +92,9 @@ function encontrarCadeiasCriticas(disciplinas) {
 }
 
 // Nível de cada disciplina → grafo disposto em ordem de profundidade
-function calcularNiveis(visiveis) {
+// (optativas, periodo 99, recebem nivelOptativas — encaixe visual p/ a coluna
+//  logo após o último semestre)
+function calcularNiveis(visiveis, nivelOptativas = 99) {
   const mapa = {};
   visiveis.forEach(d => { mapa[d.id] = d; });
 
@@ -97,7 +114,7 @@ function calcularNiveis(visiveis) {
       if (mapa[p]) maxPre = Math.max(maxPre, calcular(p));
     });
 
-    niveis[id] = (d.periodo === 99 ? 99 : (d.periodo || 0));
+    niveis[id] = (d.periodo === 99 ? nivelOptativas : (d.periodo || 0));
     visitando[id] = false;
     return niveis[id];
   }
@@ -108,101 +125,45 @@ function calcularNiveis(visiveis) {
 
 function preTitle(d){ var ps=d.pre||[]; if(!ps.length) return "Sem pre-requisitos"; return "Pre-requisitos: " + ps.map(function(c){ var p=disciplinas.find(function(x){return x.id===c}); return p ? (c + " - " + p.nome) : c; }).join("; ");}
 
-function renderizarGrafo(containerId, filtro = 'obrigatorias') {
+function renderizarGrafo(containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
   if (typeof vis === 'undefined') return;
 
-  // --- 1. Seleciona as disciplinas visíveis ---
-  let visiveis = [];
-  let idsCriticos = new Set();
-
-  if (filtro === 'critica') {
-    // Todas as disciplinas com a MAIOR profundidade (pode haver mais de um caminho)
-    const { cadeias } = encontrarCadeiasCriticas(disciplinas);
-
-    visiveis = [];
-    cadeias.forEach(cadeia => {
-      cadeia.forEach(d => {
-        idsCriticos.add(d.id);
-        if (!visiveis.find(x => x.id === d.id)) visiveis.push(d);
-      });
-    });
-
-    // Inclui pré-reqs concluídos que aparecem nos caminhos
-    const extras = [];
-    visiveis.slice().forEach(d => {
-      d.pre.forEach(pre => {
-        if (idsCriticos.has(pre)) return;
-        const dPre = disciplinas.find(x => x.id === pre);
-        if (dPre && dPre.estado === 'concluida') extras.push(dPre);
-      });
-    });
-    extras.forEach(d => {
-      if (!visiveis.find(x => x.id === d.id)) visiveis.push(d);
-    });
-
-  } else if (filtro === 'matricula') {
-    // Prévia da matrícula: o que foi selecionado + o que essa escolha libera
-    const idsSemeados = new Set();
-    ofertas.forEach(o => {
-      if (turmasSelecionadas.has(o.turmaId)) idsSemeados.add(o.disciplinaId);
-    });
-
-    const filhosMap = {};
-    disciplinas.forEach(d => { filhosMap[d.id] = []; });
-    disciplinas.forEach(d => {
-      (d.pre || []).forEach(p => { if (filhosMap[p]) filhosMap[p].push(d.id); });
-    });
-
-    const incluidos = new Set(idsSemeados);
-    const fila = [...idsSemeados];
-    while (fila.length) {
-      const id = fila.shift();
-      (filhosMap[id] || []).forEach(f => {
-        if (!incluidos.has(f)) { incluidos.add(f); fila.push(f); }
-      });
-    }
-
-    visiveis = disciplinas.filter(d => incluidos.has(d.id));
-
-  } else if (filtro === 'obrigatorias') {
-    visiveis = disciplinas.filter(d => d.tipo !== 'optativa' && d.estado !== 'concluida');
-    // inclui pré-reqs concluídos que ligam essas disciplinas
-    const extras = [];
-    visiveis.forEach(d => {
-      d.pre.forEach(pre => {
-        const dPre = disciplinas.find(x => x.id === pre);
-        if (dPre && dPre.estado === 'concluida') {
-          if (!visiveis.find(x => x.id === pre) && !extras.find(x => x.id === pre)) {
-            extras.push(dPre);
-          }
+  // --- 1. Seleção unificada (sem abas) ---
+  // Mostra todas as disciplinas restantes (obrigatórias + optativas)
+  // e inclui pré-requisitos concluídos como contexto visual.
+  let visiveis = disciplinas.filter(d => d.estado !== 'concluida');
+  const extras = [];
+  visiveis.forEach(d => {
+    d.pre.forEach(pre => {
+      const dPre = disciplinas.find(x => x.id === pre);
+      if (dPre && dPre.estado === 'concluida') {
+        if (!visiveis.find(x => x.id === pre) && !extras.find(x => x.id === pre)) {
+          extras.push(dPre);
         }
-      });
+      }
     });
-    visiveis = visiveis.concat(extras);
-
-  } else {
-    // tudo
-    visiveis = disciplinas.filter(d => d.estado !== 'concluida');
-    const extras = [];
-    visiveis.forEach(d => {
-      d.pre.forEach(pre => {
-        const dPre = disciplinas.find(x => x.id === pre);
-        if (dPre && dPre.estado === 'concluida') {
-          if (!visiveis.find(x => x.id === pre) && !extras.find(x => x.id === pre)) {
-            extras.push(dPre);
-          }
-        }
-      });
-    });
-    visiveis = visiveis.concat(extras);
-  }
+  });
+  visiveis = visiveis.concat(extras);
 
   const idsVisiveis = new Set(visiveis.map(d => d.id));
 
-  // Nível de cada nó → colunas em ordem de profundidade (esquerda → direita)
-  const niveis = calcularNiveis(visiveis);
+  // Caminho crítico: SEMPRE calculado e destacado em vermelho (N5)
+  const { cadeias } = encontrarCadeiasCriticas(disciplinas);
+  const idsCriticos = new Set();
+  cadeias.forEach(cadeia => cadeia.forEach(d => idsCriticos.add(d.id)));
+
+  // Nível de cada nó → colunas em ordem de semestre (esquerda → direita)
+  // Optativas (periodo 99) encaixam logo após o último semestre visível
+  let maxPeriodo = 0;
+  visiveis.forEach(d => { if (d.periodo && d.periodo !== 99 && d.periodo > maxPeriodo) maxPeriodo = d.periodo; });
+  const nivelOptativas = maxPeriodo + 1;
+  const rotulosFaixa = {};
+  for (let s = 1; s <= maxPeriodo; s++) rotulosFaixa[s] = s + 'º Semestre';
+  if (visiveis.some(d => d.periodo === 99)) rotulosFaixa[nivelOptativas] = 'Optativas';
+
+  const niveis = calcularNiveis(visiveis, nivelOptativas);
 
   // --- 2. Monta nós ---
   // Ordem vertical em cada coluna (LR): MAIOR profundidade primeiro (em cima).
@@ -313,9 +274,9 @@ function renderizarGrafo(containerId, filtro = 'obrigatorias') {
     edges: new vis.DataSet(edges)
   };
 
-  // Ajuste de espaçamento conforme o filtro
-  const levelSep = filtro === 'critica' ? 240 : 200;
-  const nodeSpc  = filtro === 'critica' ? 140 : 110;
+  // Espaçamento fixo (sem filtros/abas)
+  const levelSep = 200;
+  const nodeSpc  = 110;
 
   const options = {
     layout: {
@@ -331,7 +292,7 @@ function renderizarGrafo(containerId, filtro = 'obrigatorias') {
     physics: false,
     interaction: {
       hover: true,
-      zoomView: true, minZoom: 0.25, maxZoom: 2.0, zoomSpeed: 0.6,
+      zoomView: true, zoomSpeed: 0.6,
       dragView: true,
       dragNodes: false
     },
@@ -340,9 +301,65 @@ function renderizarGrafo(containerId, filtro = 'obrigatorias') {
 
   container.innerHTML = '';
   _networkAtual = new vis.Network(container, data, options);
+    // N2 — limites de zoom (o vis-network atual não aceita zoomMin/Max nas
+    // options; aplicamos um clamp no evento 'zoom')
+    limitarZoom(_networkAtual, 0.15, 2.0);
+    // N3 — faixas de semestre no topo das colunas (layout puro)
+    _networkAtual.on('beforeDrawing', ctx => {
+      desenharFaixasSemestre(ctx, _networkAtual, niveis, rotulosFaixa);
+    });
     _networkAtual.once('afterDrawing', () => {
         enquadrarPorLargura(container, _networkAtual);
       });
+    }
+
+    // ============================================================
+    // N3 — FAIXAS DE SEMESTRE
+    // Desenha colunas 1º, 2º, 3º... (e "Optativas") no topo do grafo.
+    // Só desenho no canvas — não altera dados nem a estrutura do grafo.
+    // ============================================================
+    function desenharFaixasSemestre(ctx, network, niveis, rotulos) {
+      if (!network || !niveis) return;
+      const posicoes = network.getPositions();
+
+      // Agrupa os nós por nível (semestre)
+      const grupos = {};
+      Object.keys(posicoes).forEach(id => {
+        const nivel = niveis[id];
+        if (nivel === undefined || nivel === null) return;
+        if (!grupos[nivel]) grupos[nivel] = [];
+        grupos[nivel].push(posicoes[id]);
+      });
+
+      const LARGURA_COLUNA = 210;   // ~largura máxima do nó (190) + folga
+      const ALTURA_CABECALHO = 56;
+
+      Object.keys(grupos)
+        .map(Number)
+        .sort((a, b) => a - b)
+        .forEach(nivel => {
+          const pts = grupos[nivel];
+          const centroX = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+          const topoY   = Math.min.apply(null, pts.map(p => p.y)) - 30;
+          const baseY   = Math.max.apply(null, pts.map(p => p.y)) + 30;
+
+          // Faixa de fundo sutil atrás da coluna
+          ctx.fillStyle = 'rgba(148, 163, 184, 0.07)';
+          ctx.fillRect(
+            centroX - LARGURA_COLUNA / 2,
+            topoY - ALTURA_CABECALHO,
+            LARGURA_COLUNA,
+            (baseY - topoY) + ALTURA_CABECALHO
+          );
+
+          // Rótulo no topo da faixa
+          const rotulo = (rotulos && rotulos[nivel]) || ((nivel === 99 || nivel >= 90) ? 'Optativas' : nivel + 'º Semestre');
+          ctx.fillStyle = '#64748b';
+          ctx.font = '600 14px system-ui, Segoe UI, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(rotulo, centroX, topoY - ALTURA_CABECALHO / 2);
+        });
     }
 
     function enquadrarPorLargura(container, network) {
@@ -361,7 +378,7 @@ function renderizarGrafo(containerId, filtro = 'obrigatorias') {
       });
 
       const margemEsq = 30;
-      const margemTopo = 30;
+      const margemTopo = 90; // espaço para o rótulo das faixas de semestre (N3)
 
       const larguraGrafo = (maxX - minX) + 200;
       const larguraContainer = container.clientWidth;

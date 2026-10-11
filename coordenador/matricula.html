@@ -43,12 +43,12 @@
         <p style="color: #64748b; margin: 4px 0 0 0;">Defina as ofertas de disciplinas do fluxo.</p>
       </header>
 
-      <!-- PRÓXIMO PERÍODO DE MATRÍCULA -->
+      <!-- PERÍODO DE MATRÍCULA — abrir/fechar com um clique (N4) -->
       <div class="card" style="margin-bottom:20px;">
         <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
           <div>
-            <p class="card-title" style="margin-bottom:4px;">📅 Próximo período de matrícula</p>
-            <p style="color:#64748b; font-size:13px; margin:0;">Período exibido para os alunos na tela de matrícula.</p>
+            <p class="card-title" style="margin-bottom:4px;">📅 Período de matrícula</p>
+            <p style="color:#64748b; font-size:13px; margin:0;">Abra ou feche a matrícula para os alunos — sem precisar preencher datas.</p>
           </div>
           <div style="display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap;">
             <div>
@@ -56,17 +56,7 @@
               <input id="input-periodo" type="text" placeholder="Ex: 2026.2"
                      style="width:110px; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; box-sizing:border-box;">
             </div>
-            <div>
-              <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px;">Matrícula de</label>
-              <input id="input-periodo-inicio" type="text" placeholder="Ex: 10/02/2026"
-                     style="width:135px; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; box-sizing:border-box;">
-            </div>
-            <div>
-              <label style="display:block; font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px;">Matrícula até</label>
-              <input id="input-periodo-fim" type="text" placeholder="Ex: 15/02/2026"
-                     style="width:135px; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; box-sizing:border-box;">
-            </div>
-            <button id="btn-periodo" class="btn btn-primario">Salvar período</button>
+            <button id="btn-periodo" class="btn btn-primario">🔓 Abrir matrícula</button>
           </div>
         </div>
         <p id="status-periodo" style="margin:12px 0 0 0; font-size:13px; color:#15803d; font-weight:600;"></p>

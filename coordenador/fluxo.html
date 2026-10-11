@@ -356,8 +356,61 @@
   }
 
   // ============================================================
-  // PRÉVIA (grafo)
+  // PRÉVIA (grafo) — mesmas regras do grafo do aluno:
+  // N2 (zoom limitado) e N3 (colunas/faixas por semestre)
   // ============================================================
+
+  // O vis-network atual não aceita zoomMin/zoomMax nas options
+  // (eram opções do vis.js antigo). Aplicamos um clamp no evento 'zoom'.
+  function limitarZoom(network, min, max) {
+    network.on('zoom', () => {
+      const escala = network.getScale();
+      if (escala < min || escala > max) {
+        network.moveTo({ scale: Math.min(Math.max(escala, min), max), animation: false });
+      }
+    });
+  }
+
+  function desenharFaixasSemestre(ctx, network, niveis) {
+    if (!network || !niveis) return;
+    const posicoes = network.getPositions();
+
+    const grupos = {};
+    Object.keys(posicoes).forEach(id => {
+      const nivel = niveis[id];
+      if (nivel === undefined || nivel === null) return;
+      if (!grupos[nivel]) grupos[nivel] = [];
+      grupos[nivel].push(posicoes[id]);
+    });
+
+    const LARGURA_COLUNA = 190;
+    const ALTURA_CABECALHO = 56;
+
+    Object.keys(grupos)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .forEach(nivel => {
+        const pts = grupos[nivel];
+        const centroX = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+        const topoY   = Math.min.apply(null, pts.map(p => p.y)) - 30;
+        const baseY   = Math.max.apply(null, pts.map(p => p.y)) + 30;
+
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.07)';
+        ctx.fillRect(
+          centroX - LARGURA_COLUNA / 2,
+          topoY - ALTURA_CABECALHO,
+          LARGURA_COLUNA,
+          (baseY - topoY) + ALTURA_CABECALHO
+        );
+
+        const rotulo = (nivel === 99 || nivel >= 90) ? 'Optativas' : nivel + 'º Semestre';
+        ctx.fillStyle = '#64748b';
+        ctx.font = '600 14px system-ui, Segoe UI, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(rotulo, centroX, topoY - ALTURA_CABECALHO / 2);
+      });
+  }
 
   function renderizarPreview() {
     if (typeof vis === 'undefined') return;
@@ -368,6 +421,7 @@
     const nodes = grade.map(d => ({
       id: d.id,
       label: d.nome,
+      level: d.periodo, // N3 — coluna = semestre da disciplina
       shape: 'box',
       color: {
         background: d.tipo === 'optativa' ? '#fef3c7' : '#f1f5f9',
@@ -397,6 +451,14 @@
 
     container.innerHTML = '';
     const net = new vis.Network(container, data, options);
+    // N2 — limites de zoom: não some nem estoura
+    limitarZoom(net, 0.15, 2.0);
+
+    // N3 — faixas de semestre no topo das colunas
+    const niveis = {};
+    grade.forEach(d => { niveis[d.id] = d.periodo; });
+    net.on('beforeDrawing', ctx => desenharFaixasSemestre(ctx, net, niveis));
+
     net.once('afterDrawing', () => {
       const pos = net.getPositions();
       const keys = Object.keys(pos);
@@ -412,7 +474,7 @@
       const larg = (maxX - minX) + 200;
       const escala = Math.min(container.clientWidth / larg, 1.0);
       const cx = minX - (30 / escala) + (container.clientWidth / escala) / 2;
-      const cy = (minY + maxY) / 2;
+      const cy = (minY + maxY) / 2 - 30; // espaço p/ o rótulo das faixas
       net.moveTo({ scale: escala, position: { x: cx, y: cy }, animation: false });
     });
   }

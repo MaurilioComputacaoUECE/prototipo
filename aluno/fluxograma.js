@@ -49,12 +49,21 @@ function renderizarFluxograma() {
 // Extrai a criação do card pra reutilizar
 function criarCardDisciplina(d) {
   const card = document.createElement('div');
+  // N7 — no Simulador, concluída é histórico e não pode ser alterada
+  const travada = !!window.MODO_SIMULADOR && d.estado === 'concluida';
   card.className = `disciplina ${d.estado} ${d.tipo === 'optativa' ? 'optativa' : ''}`;
   card.innerHTML = `
-    <p class="codigo">${d.id}</p>
+    <p class="codigo">${d.id}${travada ? ' 🔒' : ''}</p>
     <p class="nome">${d.nome}</p>
-    <p class="estado">${ROTULOS[d.estado]}</p>
+    <p class="estado">${ROTULOS[d.estado]}${travada ? ' · histórico' : ''}</p>
   `;
+  if (travada) {
+    card.style.cursor = 'not-allowed';
+    card.style.opacity = '0.75';
+    card.title = 'Disciplina concluída: faz parte do histórico e não pode ser desfeita no simulador.';
+  } else if (window.MODO_SIMULADOR) {
+    card.title = 'Clique para alternar entre Futura e Em andamento (simulação)';
+  }
   card.addEventListener('click', () => alternarEstado(d.id));
   return card;
 }
@@ -62,11 +71,22 @@ function criarCardDisciplina(d) {
 function alternarEstado(id) {
   const d = disciplinas.find(x => x.id === id);
   if (!d) return;
-  const idx = CICLO.indexOf(d.estado);
-  d.estado = CICLO[(idx + 1) % CICLO.length];
+
+  // N7 — Simulador: concluídas são travadas (histórico sem desfazer)
+  if (window.MODO_SIMULADOR && d.estado === 'concluida') return;
+
+  if (window.MODO_SIMULADOR) {
+    // No simulador só alterna: futura ↔ em andamento
+    d.estado = d.estado === 'futura' ? 'em-andamento' : 'futura';
+  } else {
+    // Progresso real: ciclo completo (futura → em andamento → concluída → ...)
+    const idx = CICLO.indexOf(d.estado);
+    d.estado = CICLO[(idx + 1) % CICLO.length];
+  }
+
   salvarEstado();
   renderizarFluxograma();
-  renderizarGrafo('grafo-caminhos', window._filtroGrafoAtual || 'obrigatorias');
+  renderizarGrafo('grafo-caminhos');
 }
 
 function atualizarIndicadores() {
@@ -126,38 +146,5 @@ function configurarModal() {
     if (e.target.id === 'modal-cadeia') modal.style.display = 'none';
   });
 }
-    function configurarAbasGrafo() {
-      const abas = document.querySelectorAll('.aba-grafo');
-      const hint = document.getElementById('hint-grafo');
-      if (!abas.length) return;
 
-      const textos = {
-        obrigatorias: 'Mostrando apenas as obrigatórias que faltam da grade.',
-        tudo:         'Mostrando todas as disciplinas restantes, incluindo optativas (borda tracejada amarela).'
-      };
-
-      function textoCritica() {
-        const { semestres, cadeias } = encontrarCadeiasCriticas(disciplinas);
-        if (cadeias.length > 1) {
-          return `Maior profundidade da grade: ${semestres} semestre(s) — ${cadeias.length} disciplinas empatadas, exibindo todos os caminhos.`;
-        }
-        return `Este é o caminho mais longo de pré-requisitos — ${semestres} semestre(s) ainda faltam até a formatura.`;
-      }
-
-      abas.forEach(btn => {
-        btn.addEventListener('click', () => {
-          abas.forEach(b => b.classList.remove('ativa'));
-          btn.classList.add('ativa');
-          window._filtroGrafoAtual = btn.dataset.filtro;
-          renderizarGrafo('grafo-caminhos', btn.dataset.filtro);
-          if (hint) {
-            hint.textContent = btn.dataset.filtro === 'critica'
-              ? textoCritica()
-              : (textos[btn.dataset.filtro] || '');
-          }
-        });
-      });
-    }
-
-  
   

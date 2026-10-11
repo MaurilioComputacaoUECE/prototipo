@@ -64,36 +64,45 @@ selectDisciplina.addEventListener('change', sincronizarTurma);
 sincronizarTurma();
 
 // ============================================================
-// PRÓXIMO PERÍODO DE MATRÍCULA
+// PERÍODO DE MATRÍCULA — abrir/fechar com um clique (N4)
+// Sem campos de data: o coordenador só clica Abrir / Fechar.
 // ============================================================
 
 const inputPeriodo = document.getElementById('input-periodo');
-const inputPeriodoInicio = document.getElementById('input-periodo-inicio');
-const inputPeriodoFim = document.getElementById('input-periodo-fim');
 const statusPeriodo = document.getElementById('status-periodo');
+const btnPeriodo = document.getElementById('btn-periodo');
 
 function atualizarStatusPeriodo() {
-  statusPeriodo.textContent = `Próximo período: ${periodoMatricula.periodo} · matrícula de ${periodoMatricula.inicio} até ${periodoMatricula.fim}`;
+  if (periodoMatricula.aberto) {
+    statusPeriodo.textContent = `🟢 Matrícula ${periodoMatricula.periodo} ABERTA — os alunos já conseguem montar a matrícula.`;
+    statusPeriodo.style.color = '#15803d';
+    btnPeriodo.textContent = '🔒 Fechar matrícula';
+  } else {
+    statusPeriodo.textContent = `⚪ Matrícula ${periodoMatricula.periodo} fechada — os alunos veem o aviso de período fechado.`;
+    statusPeriodo.style.color = '#64748b';
+    btnPeriodo.textContent = '🔓 Abrir matrícula';
+  }
 }
 
 inputPeriodo.value = periodoMatricula.periodo;
-inputPeriodoInicio.value = periodoMatricula.inicio || '';
-inputPeriodoFim.value = periodoMatricula.fim;
 atualizarStatusPeriodo();
 
-document.getElementById('btn-periodo').addEventListener('click', () => {
-  const periodo = inputPeriodo.value.trim();
-  const inicio = inputPeriodoInicio.value.trim();
-  const fim = inputPeriodoFim.value.trim();
+btnPeriodo.addEventListener('click', () => {
+  const periodo = inputPeriodo.value.trim() || periodoMatricula.periodo;
+  const aberto = !periodoMatricula.aberto;
 
-  if (!periodo || !inicio || !fim) {
-    alert('Preencha o período, o início e o fim da matrícula.');
-    return;
-  }
+  salvarProximoPeriodo({
+    periodo,
+    inicio: periodoMatricula.inicio || '',
+    fim: periodoMatricula.fim || '',
+    aberto
+  });
 
-  // Mantém o estado On/Off definido (sem reabrir o período por acidente)
-  salvarProximoPeriodo({ periodo, inicio, fim, aberto: periodoMatricula.aberto });
+  inputPeriodo.value = periodo;
   atualizarStatusPeriodo();
+  alert(aberto
+    ? `Matrícula ${periodo} ABERTA para os alunos.`
+    : `Matrícula ${periodo} fechada para os alunos.`);
 });
 
 // ============================================================

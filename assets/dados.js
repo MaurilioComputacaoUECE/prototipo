@@ -124,8 +124,9 @@ function carregarProximoPeriodo() {
   if (salvo) {
     try {
       const p = JSON.parse(salvo);
-      if (p && p.periodo && p.fim) {
+      if (p && p.periodo) {
         // Compatível com valores salvos antes de existirem "inicio"/"aberto"
+        // (datas não são mais obrigatórias — N4: coordenador só abre/fecha)
         return {
           periodo: p.periodo,
           inicio: p.inicio || periodoMatricula.inicio,
